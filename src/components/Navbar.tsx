@@ -302,7 +302,7 @@ export const Navbar: React.FC = () => {
               }
             `}
           >
-            Get In Touch
+            Contact Me
           </a>
         </div>
 
