@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
@@ -20,7 +21,19 @@ import { Contact } from './sections/Contact';
 
 import type { Project, CertificateItem } from './types/portfolio';
 
-function AppContent() {
+// Admin CMS imports
+import { AuthProvider } from './admin/context/AuthContext';
+import { ProtectedRoute } from './admin/components/ProtectedRoute';
+import { LoginPage } from './admin/pages/LoginPage';
+import { AdminLayout } from './admin/components/AdminLayout';
+import { DashboardOverview } from './admin/pages/DashboardOverview';
+import { AdminPlaceholder } from './admin/pages/AdminPlaceholder';
+
+/**
+ * Public portfolio view containing all public sections.
+ * Preserved identically from the existing portfolio.
+ */
+export function PublicPortfolio() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedCert, setSelectedCert] = useState<CertificateItem | null>(
     null
@@ -104,7 +117,60 @@ function AppContent() {
 export function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Portfolio Route */}
+            <Route path="/" element={<PublicPortfolio />} />
+
+            {/* Admin Authentication */}
+            <Route path="/admin/login" element={<LoginPage />} />
+
+            {/* Protected Admin Dashboard Routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<DashboardOverview />} />
+              <Route
+                path="profile"
+                element={<AdminPlaceholder title="Profile Management" />}
+              />
+              <Route
+                path="projects"
+                element={<AdminPlaceholder title="Projects Management" />}
+              />
+              <Route
+                path="certificates"
+                element={<AdminPlaceholder title="Certificates Management" />}
+              />
+              <Route
+                path="experience"
+                element={<AdminPlaceholder title="Experience Management" />}
+              />
+              <Route
+                path="education"
+                element={<AdminPlaceholder title="Education Management" />}
+              />
+              <Route
+                path="skills"
+                element={<AdminPlaceholder title="Skills Management" />}
+              />
+              <Route
+                path="social-links"
+                element={<AdminPlaceholder title="Social Links Management" />}
+              />
+            </Route>
+
+            {/* Catch-all fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
