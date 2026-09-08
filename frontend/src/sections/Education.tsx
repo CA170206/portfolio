@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   GraduationCap,
@@ -10,7 +10,13 @@ import {
 } from 'lucide-react';
 import { educationData } from '../data/education';
 
-const ResultHighlight = ({ label = 'Semester 6 · SGPA 8.45' }) => {
+interface ResultModalData {
+  image?: string;
+  title: string;
+  label: string;
+}
+
+const ResultHighlight = ({ label = 'Semester 6 · SGPA 8.45' }: { label?: string }) => {
   const parts = String(label).split('·');
 
   const semester =
@@ -38,10 +44,10 @@ const ResultHighlight = ({ label = 'Semester 6 · SGPA 8.45' }) => {
 };
 
 const Education = () => {
-  const [selectedResult, setSelectedResult] = useState(null);
+  const [selectedResult, setSelectedResult] = useState<ResultModalData | null>(null);
 
   useEffect(() => {
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         setSelectedResult(null);
       }
@@ -238,7 +244,7 @@ const Education = () => {
                               type="button"
                               onClick={() =>
                                 setSelectedResult({
-                                  image: edu.resultImage,
+                                  image: edu.resultImage || '',
                                   title:
                                     edu.resultTitle || 'B.Tech Result',
                                   label:
@@ -252,7 +258,7 @@ const Education = () => {
                               <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-sm transition-all duration-300 group-hover/result:-translate-y-1 dark:border-[#39434d] dark:bg-[#20262d]">
                                 <div className="relative overflow-hidden rounded-lg bg-white dark:bg-slate-950">
                                   <img
-                                    src={edu.resultImage}
+                                    src={edu.resultImage || undefined}
                                     alt="B.Tech Semester 6 Result"
                                     className="block h-auto w-full transition-transform duration-500 group-hover/result:scale-[1.025]"
                                   />
@@ -283,7 +289,7 @@ const Education = () => {
                                 type="button"
                                 onClick={() =>
                                   setSelectedResult({
-                                    image: edu.resultImage,
+                                    image: edu.resultImage || '',
                                     title: edu.resultTitle || 'B.Tech Result',
                                     label: edu.resultLabel || 'Semester 6 · SGPA 8.45',
                                   })
