@@ -11,7 +11,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:format": "prisma format",
-    "admin:create": "tsx src/scripts/createAdmin.ts"
+    "admin:create": "tsx src/scripts/createAdmin.ts",
+    "test:api": "tsx src/scripts/testMilestone5.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.4.1",
