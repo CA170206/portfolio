@@ -1,11 +1,11 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { Application } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import healthRoutes from './routes/health.routes';
+import authRoutes from './routes/auth.routes';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler';
-
-// 1. Load environment variables
-dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 5000;
@@ -23,8 +23,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// 4. Connect health endpoint at /api/health
+// 4. Connect routes
 app.use('/api/health', healthRoutes);
+app.use('/api/auth', authRoutes);
 
 // 5. JSON 404 response for unknown API routes
 app.use(notFoundHandler);
