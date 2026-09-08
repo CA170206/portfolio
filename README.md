@@ -1,32 +1,59 @@
-# React + TypeScript + Vite
+# Portfolio Fullstack Monorepo (2026-2027)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+This repository contains both the client-side portfolio application and the dedicated REST API backend.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 📁 Repository Structure
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```
+portfolio/
+├── frontend/                 # React + Vite + TypeScript + Tailwind CSS Frontend
+│   ├── src/                  # Application components, sections, assets, data
+│   ├── public/               # Static public assets
+│   ├── index.html            # Vite HTML entry point
+│   ├── package.json          # Frontend dependencies & scripts
+│   ├── tailwind.config.js    # Tailwind styling config
+│   ├── vite.config.ts        # Vite configuration
+│   └── tsconfig.json         # TypeScript configuration
+│
+├── backend/                  # Node.js + Express + TypeScript + Prisma Backend
+│   ├── prisma/               # Prisma schema & PostgreSQL definitions
+│   ├── src/                  # Controllers, routes, middleware, services, server.ts
+│   ├── .env.example          # Environment variables template
+│   ├── package.json          # Backend dependencies & scripts
+│   ├── tsconfig.json         # Strict TypeScript configuration
+│   └── README.md             # Backend setup & API documentation
+│
+└── README.md                 # Project root documentation
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+---
+
+## 🚀 Quick Start
+
+### 1. Frontend Development
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend will run on [http://localhost:5173](http://localhost:5173).
+
+---
+
+### 2. Backend Development
+
+```bash
+cd backend
+npm install
+cp .env.example .env          # Configure your PostgreSQL DATABASE_URL
+npm run prisma:generate
+npm run dev
+```
+
+The backend server will run on [http://localhost:5000](http://localhost:5000).
+
+Health Check endpoint: [http://localhost:5000/api/health](http://localhost:5000/api/health).

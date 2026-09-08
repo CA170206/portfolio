@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
+import { PortfolioRoute } from './components/PortfolioRoute';
 import { CaseStudyModal } from './components/CaseStudyModal';
 import { CertPreviewModal } from './components/CertPreviewModal';
 import { Toast } from './components/ui/Toast';
@@ -21,19 +22,23 @@ import type { Project, CertificateItem } from './types/portfolio';
 
 function AppContent() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  const [selectedCert, setSelectedCert] = useState<CertificateItem | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+  const [selectedCert, setSelectedCert] = useState<CertificateItem | null>(
+    null
+  );
+  const [toast, setToast] = useState<{
+    message: string;
+    type: 'success' | 'info';
+  } | null>(null);
 
-  const showToast = (message: string, type: 'success' | 'info' = 'success') => {
-    setToast({
-      message,
-      type,
-    });
+  const showToast = (
+    message: string,
+    type: 'success' | 'info' = 'success'
+  ) => {
+    setToast({ message, type });
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#f8fafc] text-slate-900 dark:bg-[#12161b] dark:text-[#f4f5f6] selection:bg-[#d6a83a]/25 selection:text-[#946914] dark:selection:text-[#e2b94f] transition-colors duration-200">
-      {/* Global background grid */}
+    <div className="relative min-h-screen overflow-x-hidden bg-[#f8fafc] text-slate-900 transition-colors duration-200 selection:bg-[#d6a83a]/25 selection:text-[#946914] dark:bg-[#12161b] dark:text-[#f4f5f6] dark:selection:text-[#e2b94f]">
       <div
         className="pointer-events-none fixed inset-0 z-0 opacity-[0.03] dark:opacity-[0.02]"
         style={{
@@ -43,10 +48,10 @@ function AppContent() {
         }}
       />
 
-      {/* Navigation */}
       <Navbar />
 
-      {/* Main content */}
+      <PortfolioRoute />
+
       <main className="relative z-10">
         <Hero />
 
@@ -75,22 +80,18 @@ function AppContent() {
         <Contact onShowToast={showToast} />
       </main>
 
-      {/* Footer */}
       <Footer />
 
-      {/* Project case study modal */}
       <CaseStudyModal
         project={selectedProject}
         onClose={() => setSelectedProject(null)}
       />
 
-      {/* Certificate preview modal */}
       <CertPreviewModal
         certificate={selectedCert}
         onClose={() => setSelectedCert(null)}
       />
 
-      {/* Toast notifications */}
       <Toast
         message={toast ? toast.message : null}
         type={toast ? toast.type : 'success'}
