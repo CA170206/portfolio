@@ -1,5 +1,15 @@
 import prisma from '../config/prisma';
 
+export interface CaseStudyInput {
+  problem: string;
+  solution: string;
+  keyFeatures?: string[];
+  architectureOverview?: string;
+  challenges?: string[];
+  learnings?: string[];
+  futureImprovements?: string[];
+}
+
 export interface CreateProjectInput {
   title: string;
   tagline?: string;
@@ -11,6 +21,7 @@ export interface CreateProjectInput {
   sortOrder?: number;
   isVisible?: boolean;
   technologies?: string[];
+  caseStudy?: CaseStudyInput | null;
 }
 
 export interface UpdateProjectInput {
@@ -24,6 +35,7 @@ export interface UpdateProjectInput {
   sortOrder?: number;
   isVisible?: boolean;
   technologies?: string[];
+  caseStudy?: CaseStudyInput | null;
 }
 
 export interface AddImageInput {
@@ -117,7 +129,7 @@ export class ProjectService {
   }
 
   /**
-   * Creates a new project and associates technologies.
+   * Creates a new project and associates technologies and case study.
    */
   async createProject(data: CreateProjectInput) {
     const project = await prisma.project.create({
@@ -138,11 +150,26 @@ export class ProjectService {
       await this.syncTechnologies(project.id, data.technologies);
     }
 
+    if (data.caseStudy) {
+      await prisma.projectCaseStudy.create({
+        data: {
+          projectId: project.id,
+          problem: data.caseStudy.problem.trim(),
+          solution: data.caseStudy.solution.trim(),
+          keyFeatures: data.caseStudy.keyFeatures || [],
+          architectureOverview: data.caseStudy.architectureOverview?.trim() || '',
+          challenges: data.caseStudy.challenges || [],
+          learnings: data.caseStudy.learnings || [],
+          futureImprovements: data.caseStudy.futureImprovements || [],
+        },
+      });
+    }
+
     return this.getProjectById(project.id);
   }
 
   /**
-   * Updates an existing project and syncs technologies if provided.
+   * Updates an existing project, syncs technologies, and upserts case study if provided.
    */
   async updateProject(id: string, data: UpdateProjectInput) {
     const existing = await prisma.project.findUnique({ where: { id } });
@@ -167,6 +194,37 @@ export class ProjectService {
 
     if (data.technologies !== undefined) {
       await this.syncTechnologies(id, data.technologies);
+    }
+
+    if (data.caseStudy !== undefined) {
+      if (data.caseStudy === null) {
+        await prisma.projectCaseStudy.deleteMany({
+          where: { projectId: id },
+        });
+      } else {
+        await prisma.projectCaseStudy.upsert({
+          where: { projectId: id },
+          create: {
+            projectId: id,
+            problem: data.caseStudy.problem.trim(),
+            solution: data.caseStudy.solution.trim(),
+            keyFeatures: data.caseStudy.keyFeatures || [],
+            architectureOverview: data.caseStudy.architectureOverview?.trim() || '',
+            challenges: data.caseStudy.challenges || [],
+            learnings: data.caseStudy.learnings || [],
+            futureImprovements: data.caseStudy.futureImprovements || [],
+          },
+          update: {
+            problem: data.caseStudy.problem.trim(),
+            solution: data.caseStudy.solution.trim(),
+            keyFeatures: data.caseStudy.keyFeatures || [],
+            architectureOverview: data.caseStudy.architectureOverview?.trim() || '',
+            challenges: data.caseStudy.challenges || [],
+            learnings: data.caseStudy.learnings || [],
+            futureImprovements: data.caseStudy.futureImprovements || [],
+          },
+        });
+      }
     }
 
     return this.getProjectById(id);

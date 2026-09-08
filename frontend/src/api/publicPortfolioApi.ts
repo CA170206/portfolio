@@ -59,9 +59,8 @@ export const resolveAsset = (url: string | null | undefined, fallback: string = 
   return trimmed;
 };
 
-const API_BASE_URL =
-  (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/+$/, '') ||
-  'http://localhost:5000/api';
+import { buildApiUrl, getApiBaseUrl } from './apiClient';
+export { buildApiUrl, getApiBaseUrl };
 
 interface ApiResponse<T> {
   success: boolean;
@@ -70,8 +69,7 @@ interface ApiResponse<T> {
 }
 
 async function fetchPublicJson<T>(endpoint: string): Promise<T | null> {
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  const url = `${API_BASE_URL}${cleanEndpoint}`;
+  const url = buildApiUrl(endpoint);
 
   try {
     const res = await fetch(url, {
@@ -82,7 +80,7 @@ async function fetchPublicJson<T>(endpoint: string): Promise<T | null> {
     });
 
     if (!res.ok) {
-      console.warn(`[publicPortfolioApi] GET ${cleanEndpoint} returned status ${res.status}`);
+      console.warn(`[publicPortfolioApi] GET ${url} returned status ${res.status}`);
       return null;
     }
 
@@ -92,7 +90,7 @@ async function fetchPublicJson<T>(endpoint: string): Promise<T | null> {
     }
     return null;
   } catch (err) {
-    console.warn(`[publicPortfolioApi] Network error fetching ${cleanEndpoint}:`, err);
+    console.warn(`[publicPortfolioApi] Network error fetching ${url}:`, err);
     return null;
   }
 }
@@ -407,13 +405,13 @@ export const adaptSocialLinks = (rawList: RawSocialLink[] | null): SocialLink[] 
 // ==================== PUBLIC API METHODS ====================
 
 export const publicPortfolioApi = {
-  getProfile: async () => adaptProfile(await fetchPublicJson<RawProfile>('/profile/public')),
-  getProjects: async () => adaptProjects(await fetchPublicJson<RawProject[]>('/projects/public')),
-  getCertificates: async () => adaptCertificates(await fetchPublicJson<RawCertificate[]>('/certificates/public')),
-  getExperience: async () => adaptExperience(await fetchPublicJson<RawExperience[]>('/experience/public')),
-  getEducation: async () => adaptEducation(await fetchPublicJson<RawEducation[]>('/education/public')),
-  getSkills: async () => adaptSkills(await fetchPublicJson<RawSkill[]>('/skills/public')),
-  getSocialLinks: async () => adaptSocialLinks(await fetchPublicJson<RawSocialLink[]>('/social-links/public')),
+  getProfile: async () => adaptProfile(await fetchPublicJson<RawProfile>('/api/profile/public')),
+  getProjects: async () => adaptProjects(await fetchPublicJson<RawProject[]>('/api/projects/public')),
+  getCertificates: async () => adaptCertificates(await fetchPublicJson<RawCertificate[]>('/api/certificates/public')),
+  getExperience: async () => adaptExperience(await fetchPublicJson<RawExperience[]>('/api/experience/public')),
+  getEducation: async () => adaptEducation(await fetchPublicJson<RawEducation[]>('/api/education/public')),
+  getSkills: async () => adaptSkills(await fetchPublicJson<RawSkill[]>('/api/skills/public')),
+  getSocialLinks: async () => adaptSocialLinks(await fetchPublicJson<RawSocialLink[]>('/api/social-links/public')),
 };
 
 export default publicPortfolioApi;
