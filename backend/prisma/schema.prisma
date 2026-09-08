@@ -17,3 +17,186 @@ model Admin {
 
   @@map("admins")
 }
+
+model Profile {
+  id           String   @id @default(uuid())
+  slug         String   @unique @default("default")
+  name         String
+  headline     String
+  shortBio     String
+  about        String
+  location     String
+  email        String
+  phone        String?
+  profileImage String?
+  resumeUrl    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("profiles")
+}
+
+model Project {
+  id                  String              @id @default(uuid())
+  title               String
+  tagline             String
+  shortDescription    String
+  detailedDescription String
+  liveUrl             String?
+  githubUrl           String?
+  featured            Boolean             @default(false)
+  sortOrder           Int                 @default(0)
+  isVisible           Boolean             @default(true)
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  caseStudy           ProjectCaseStudy?
+  images              ProjectImage[]
+  technologies        ProjectTechnology[]
+
+  @@map("projects")
+}
+
+model ProjectImage {
+  id        String   @id @default(uuid())
+  projectId String
+  imageUrl  String
+  altText   String?
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@map("project_images")
+}
+
+model Technology {
+  id        String              @id @default(uuid())
+  name      String              @unique
+  createdAt DateTime            @default(now())
+  projects  ProjectTechnology[]
+
+  @@map("technologies")
+}
+
+model ProjectTechnology {
+  projectId    String
+  technologyId String
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, technologyId])
+  @@map("project_technologies")
+}
+
+model ProjectCaseStudy {
+  id                   String   @id @default(uuid())
+  projectId            String   @unique
+  problem              String
+  solution             String
+  keyFeatures          String[]
+  architectureOverview String
+  challenges           String[]
+  learnings            String[]
+  futureImprovements   String[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  project              Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("project_case_studies")
+}
+
+model Certificate {
+  id              String   @id @default(uuid())
+  title           String
+  issuer          String
+  issueDate       String
+  description     String?
+  imageUrl        String
+  verificationUrl String?
+  credentialId    String?
+  skills          String[]
+  sortOrder       Int      @default(0)
+  isVisible       Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("certificates")
+}
+
+model Experience {
+  id               String   @id @default(uuid())
+  company          String
+  position         String
+  employmentType   String?
+  location         String?
+  startDate        String
+  endDate          String?
+  currentlyWorking Boolean  @default(false)
+  description      String[]
+  technologies     String[]
+  offerLetterUrl   String?
+  sortOrder        Int      @default(0)
+  isVisible        Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("experiences")
+}
+
+model Education {
+  id             String   @id @default(uuid())
+  institution    String
+  degree         String
+  fieldOfStudy   String?
+  startDate      String
+  endDate        String?
+  grade          String?
+  gradeLabel     String?
+  resultLabel    String?
+  resultTitle    String?
+  resultImageUrl String?
+  description    String?
+  coursework     String[]
+  sortOrder      Int      @default(0)
+  isVisible      Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("educations")
+}
+
+model Skill {
+  id        String        @id @default(uuid())
+  name      String
+  category  SkillCategory
+  highlight Boolean       @default(false)
+  sortOrder Int           @default(0)
+  isVisible Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("skills")
+}
+
+model SocialLink {
+  id        String   @id @default(uuid())
+  platform  String
+  url       String
+  username  String?
+  icon      String?
+  sortOrder Int      @default(0)
+  isVisible Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("social_links")
+}
+
+enum SkillCategory {
+  FRONTEND
+  BACKEND
+  DATABASE
+  TOOLS
+}

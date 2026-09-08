@@ -10,6 +10,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
+    "prisma:format": "prisma format",
     "admin:create": "tsx src/scripts/createAdmin.ts"
   },
   "dependencies": {
