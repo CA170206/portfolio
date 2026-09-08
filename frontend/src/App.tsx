@@ -34,6 +34,8 @@ import { ExperienceManager } from './admin/pages/ExperienceManager';
 import { EducationManager } from './admin/pages/EducationManager';
 import { SkillsManager } from './admin/pages/SkillsManager';
 import { SocialLinksManager } from './admin/pages/SocialLinksManager';
+import { GitHubManager } from './admin/pages/GitHubManager';
+import { LinkedInManager } from './admin/pages/LinkedInManager';
 
 /**
  * Public portfolio view containing all public sections.
@@ -155,6 +157,8 @@ export function App() {
               <Route path="experience" element={<ExperienceManager />} />
               <Route path="education" element={<EducationManager />} />
               <Route path="skills" element={<SkillsManager />} />
+              <Route path="github" element={<GitHubManager />} />
+              <Route path="linkedin" element={<LinkedInManager />} />
               <Route path="social-links" element={<SocialLinksManager />} />
             </Route>
 

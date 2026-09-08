@@ -12,6 +12,10 @@ import {
   ExternalLink,
   X,
 } from 'lucide-react';
+import {
+  GithubIcon,
+  LinkedinIcon,
+} from '../../components/icons/SocialIcons';
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -36,19 +40,9 @@ const NAV_ITEMS = [
     icon: FolderKanban,
   },
   {
-    to: '/admin/certificates',
-    label: 'Certificates',
-    icon: Award,
-  },
-  {
     to: '/admin/experience',
     label: 'Experience',
     icon: Briefcase,
-  },
-  {
-    to: '/admin/education',
-    label: 'Education',
-    icon: GraduationCap,
   },
   {
     to: '/admin/skills',
@@ -56,11 +50,32 @@ const NAV_ITEMS = [
     icon: Code2,
   },
   {
+    to: '/admin/certificates',
+    label: 'Certificates',
+    icon: Award,
+  },
+  {
+    to: '/admin/education',
+    label: 'Education',
+    icon: GraduationCap,
+  },
+  {
+    to: '/admin/github',
+    label: 'GitHub',
+    icon: GithubIcon,
+  },
+  {
+    to: '/admin/linkedin',
+    label: 'LinkedIn',
+    icon: LinkedinIcon,
+  },
+  {
     to: '/admin/social-links',
     label: 'Social Links',
     icon: Share2,
   },
 ];
+
 
 export const AdminSidebar: React.FC<
   AdminSidebarProps

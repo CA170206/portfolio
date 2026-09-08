@@ -194,9 +194,38 @@ model SocialLink {
   @@map("social_links")
 }
 
+model GithubData {
+  id                 String    @id @default(uuid())
+  username           String    @default("CA170206")
+  profileUrl         String    @default("https://github.com/CA170206")
+  totalContributions Int       @default(0)
+  contributionsData  Json?
+  lastSyncedAt       DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@map("github_data")
+}
+
+model LinkedinData {
+  id          String   @id @default(uuid())
+  profileUrl  String   @default("https://linkedin.com/in/chaitanya-anmulwar")
+  followers   String   @default("1000+")
+  connections String   @default("500+")
+  role        String   @default("Web Development Intern")
+  company     String   @default("Labmentix")
+  location    String   @default("Greater Nashik Area")
+  education   String   @default("B.Tech CSE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("linkedin_data")
+}
+
 enum SkillCategory {
   FRONTEND
   BACKEND
   DATABASE
   TOOLS
 }
+

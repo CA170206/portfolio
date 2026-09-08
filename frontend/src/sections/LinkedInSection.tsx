@@ -22,13 +22,22 @@ const LINKEDIN_STATS = {
 };
 
 export const LinkedInSection: React.FC = () => {
-  const { profile, socialLinks } = usePortfolioData();
+  const { profile, socialLinks, linkedin } = usePortfolioData();
+
+  const linkedinStats = {
+    connections: linkedin?.connections || LINKEDIN_STATS.connections,
+    followers: linkedin?.followers ?? LINKEDIN_STATS.followers,
+    role: linkedin?.role || LINKEDIN_STATS.role,
+    company: linkedin?.company || LINKEDIN_STATS.company,
+    education: linkedin?.education || LINKEDIN_STATS.education,
+    university: LINKEDIN_STATS.university,
+    location: linkedin?.location || LINKEDIN_STATS.location,
+  };
 
   const linkedinUrl =
+    linkedin?.profileUrl ||
     socialLinks.find((item) => item.platform.toLowerCase() === 'linkedin')?.url ||
     'https://linkedin.com';
-
-  const linkedinStats = LINKEDIN_STATS;
 
   return (
     <section
@@ -110,7 +119,9 @@ export const LinkedInSection: React.FC = () => {
                   <span className="hidden sm:inline">·</span>
 
                   <span className="font-medium text-[#0a66c2] dark:text-[#388bfd]">
-                    {linkedinStats.followers.toLocaleString()} followers
+                    {typeof linkedinStats.followers === 'string'
+                      ? `${linkedinStats.followers} followers`
+                      : `${linkedinStats.followers.toLocaleString()} followers`}
                   </span>
                 </div>
               </div>

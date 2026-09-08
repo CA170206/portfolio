@@ -8,6 +8,10 @@ import React, {
 } from 'react';
 import publicPortfolioApi from '../api/publicPortfolioApi';
 import type {
+  RawGithubData,
+  RawLinkedinData,
+} from '../api/publicPortfolioApi';
+import type {
   ProfileData,
   Project,
   CertificateItem,
@@ -31,6 +35,8 @@ export interface PortfolioDataContextType {
   })[];
   skills: SkillCategory[];
   socialLinks: SocialLink[];
+  github: RawGithubData | null;
+  linkedin: RawLinkedinData | null;
   isLoading: boolean;
   error: string | null;
   errors: Record<string, string | null>;
@@ -55,6 +61,8 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
   >([]);
   const [skills, setSkills] = useState<SkillCategory[]>([]);
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [github, setGithub] = useState<RawGithubData | null>(null);
+  const [linkedin, setLinkedin] = useState<RawLinkedinData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
 
@@ -69,6 +77,8 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       eduRes,
       skillsRes,
       socialsRes,
+      githubRes,
+      linkedinRes,
     ] = await Promise.allSettled([
       publicPortfolioApi.getProfile(),
       publicPortfolioApi.getProjects(),
@@ -77,6 +87,8 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       publicPortfolioApi.getEducation(),
       publicPortfolioApi.getSkills(),
       publicPortfolioApi.getSocialLinks(),
+      publicPortfolioApi.getGithub(),
+      publicPortfolioApi.getLinkedin(),
     ]);
 
     const newErrors: Record<string, string | null> = {};
@@ -123,6 +135,18 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       newErrors.socialLinks = 'Failed to load social links';
     }
 
+    if (githubRes.status === 'fulfilled' && githubRes.value) {
+      setGithub(githubRes.value);
+    } else {
+      newErrors.github = 'Failed to load GitHub data';
+    }
+
+    if (linkedinRes.status === 'fulfilled' && linkedinRes.value) {
+      setLinkedin(linkedinRes.value);
+    } else {
+      newErrors.linkedin = 'Failed to load LinkedIn data';
+    }
+
     setErrors(newErrors);
     setIsLoading(false);
   }, []);
@@ -142,6 +166,8 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       education,
       skills,
       socialLinks,
+      github,
+      linkedin,
       isLoading,
       error: globalError,
       errors,
@@ -155,11 +181,14 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       education,
       skills,
       socialLinks,
+      github,
+      linkedin,
       isLoading,
       errors,
       loadAll,
     ]
   );
+
 
   return (
     <PortfolioDataContext.Provider value={contextValue}>

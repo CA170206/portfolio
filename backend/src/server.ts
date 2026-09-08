@@ -12,6 +12,8 @@ import experienceRoutes from './routes/experience.routes';
 import educationRoutes from './routes/education.routes';
 import skillRoutes from './routes/skill.routes';
 import socialLinkRoutes from './routes/socialLink.routes';
+import githubRoutes from './routes/github.routes';
+import linkedinRoutes from './routes/linkedin.routes';
 import { notFoundHandler, errorHandler } from './middleware/errorHandler';
 
 const app: Application = express();
@@ -55,6 +57,9 @@ app.use('/api/experience', experienceRoutes);
 app.use('/api/education', educationRoutes);
 app.use('/api/skills', skillRoutes);
 app.use('/api/social-links', socialLinkRoutes);
+app.use('/api/github', githubRoutes);
+app.use('/api/linkedin', linkedinRoutes);
+
 
 // 5. JSON 404 response for unknown API routes
 app.use(notFoundHandler);
