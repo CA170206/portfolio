@@ -7,7 +7,8 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { GithubIcon } from '../components/icons/SocialIcons';
-import { githubPreviewRepos, socialLinks } from '../data/socials';
+import { githubPreviewRepos } from '../data/socials';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 
 const GITHUB_USERNAME = 'CA170206';
 
@@ -59,13 +60,14 @@ interface ContributionItem {
 }
 
 export const GitHubSection: React.FC = () => {
+  const { socialLinks } = usePortfolioData();
   const [contributions, setContributions] = useState<ContributionItem[]>([]);
   const [totalContributions, setTotalContributions] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
 
   const githubUrl =
-    socialLinks.find((item) => item.platform === 'GitHub')?.url ||
+    socialLinks.find((item) => item.platform.toLowerCase() === 'github')?.url ||
     `https://github.com/${GITHUB_USERNAME}`;
 
   useEffect(() => {

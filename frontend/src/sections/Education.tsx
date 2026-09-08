@@ -8,7 +8,7 @@ import {
   FileText,
   X,
 } from 'lucide-react';
-import { educationData } from '../data/education';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 
 interface ResultModalData {
   image?: string;
@@ -16,17 +16,18 @@ interface ResultModalData {
   label: string;
 }
 
-const ResultHighlight = ({ label = 'Semester 6 · SGPA 8.45' }: { label?: string }) => {
+const ResultHighlight = ({ label }: { label?: string }) => {
+  if (!label) return null;
   const parts = String(label).split('·');
 
   const semester =
     parts.find((part) =>
       part.trim().toLowerCase().startsWith('semester')
-    )?.trim() || 'Semester 6';
+    )?.trim() || parts[0]?.trim() || '';
 
   const sgpa =
     parts.find((part) => part.trim().toLowerCase().startsWith('sgpa'))?.trim() ||
-    'SGPA 8.45';
+    parts[1]?.trim() || '';
 
   return (
     <div className="inline-flex items-center gap-2 rounded-lg border border-[#d6a83a]/30 bg-[#d6a83a]/[0.08] px-3 py-1.5">
@@ -34,16 +35,20 @@ const ResultHighlight = ({ label = 'Semester 6 · SGPA 8.45' }: { label?: string
         {semester}
       </span>
 
-      <span className="h-3.5 w-px bg-[#d6a83a]/40" />
-
-      <span className="text-xs font-extrabold tracking-tight text-[#a8780e] dark:text-[#d6a83a]">
-        {sgpa}
-      </span>
+      {sgpa && (
+        <>
+          <span className="h-3.5 w-px bg-[#d6a83a]/40" />
+          <span className="text-xs font-extrabold tracking-tight text-[#a8780e] dark:text-[#d6a83a]">
+            {sgpa}
+          </span>
+        </>
+      )}
     </div>
   );
 };
 
 const Education = () => {
+  const { education } = usePortfolioData();
   const [selectedResult, setSelectedResult] = useState<ResultModalData | null>(null);
 
   useEffect(() => {
@@ -112,7 +117,7 @@ const Education = () => {
             <div className="absolute bottom-3 left-[7px] top-3 hidden w-px bg-slate-300 dark:bg-[#303841] sm:block" />
 
             <div className="space-y-6">
-              {educationData.map((edu, index) => {
+              {education.map((edu, index) => {
                 const hasResult = Boolean(edu.resultImage);
 
                 return (
@@ -257,11 +262,13 @@ const Education = () => {
                             >
                               <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50 p-2 shadow-sm transition-all duration-300 group-hover/result:-translate-y-1 dark:border-[#39434d] dark:bg-[#20262d]">
                                 <div className="relative overflow-hidden rounded-lg bg-white dark:bg-slate-950">
-                                  <img
-                                    src={edu.resultImage || undefined}
-                                    alt="B.Tech Semester 6 Result"
-                                    className="block h-auto w-full transition-transform duration-500 group-hover/result:scale-[1.025]"
-                                  />
+                                  {edu.resultImage && (
+                                    <img
+                                      src={edu.resultImage}
+                                      alt="B.Tech Semester 6 Result"
+                                      className="block h-auto w-full transition-transform duration-500 group-hover/result:scale-[1.025]"
+                                    />
+                                  )}
 
                                   <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60 opacity-0 transition-opacity duration-300 group-hover/result:opacity-100 dark:bg-[rgba(18,22,27,0.72)]">
                                     <span className="inline-flex items-center gap-2 bg-[#d6a83a] px-3.5 py-2 text-xs font-semibold text-[#12161b]">
@@ -445,11 +452,13 @@ const Education = () => {
                 {/* Image */}
                 <div className="min-h-0 flex-1 overflow-auto bg-[#e9e8e4] p-4 dark:bg-[#181d23] sm:p-6">
                   <div className="flex min-h-full items-center justify-center">
-                    <img
-                      src={selectedResult.image}
-                      alt={selectedResult.title}
-                      className="block h-auto w-auto max-w-full object-contain"
-                    />
+                    {selectedResult.image && (
+                      <img
+                        src={selectedResult.image}
+                        alt={selectedResult.title}
+                        className="block h-auto w-auto max-w-full object-contain"
+                      />
+                    )}
                   </div>
                 </div>
 

@@ -6,7 +6,7 @@ import {
   Eye,
   ShieldCheck,
 } from 'lucide-react';
-import { certificatesData } from '../data/certificates';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 import type { CertificateItem } from '../types/portfolio';
 
 interface CertificatesProps {
@@ -14,6 +14,7 @@ interface CertificatesProps {
 }
 
 export const Certificates: React.FC<CertificatesProps> = ({ onSelectCertificate }) => {
+  const { certificates } = usePortfolioData();
   return (
     <section
       id="certificates"
@@ -59,7 +60,7 @@ export const Certificates: React.FC<CertificatesProps> = ({ onSelectCertificate 
 
         {/* Certificates Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {certificatesData.map((cert, index) => (
+          {certificates.map((cert, index) => (
             <motion.article
               key={cert.id}
               initial={{ opacity: 0, y: 25 }}

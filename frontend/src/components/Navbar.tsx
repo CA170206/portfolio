@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, Sun, Moon } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from './icons/SocialIcons';
-import { profileData } from '../data/profile';
-import { socialLinks } from '../data/socials';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 import { useTheme } from '../context/ThemeContext';
 
 interface NavItem {
@@ -22,6 +21,7 @@ const navItems: NavItem[] = [
 ];
 
 export const Navbar: React.FC = () => {
+  const { profile, socialLinks } = usePortfolioData();
   const { theme, toggleTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -69,10 +69,10 @@ export const Navbar: React.FC = () => {
   }, []);
 
   const githubLink =
-    socialLinks.find((s) => s.platform === 'GitHub')?.url || 'https://github.com/CA170206';
+    socialLinks.find((s) => s.platform.toLowerCase() === 'github')?.url || '#';
 
   const linkedinLink =
-    socialLinks.find((s) => s.platform === 'LinkedIn')?.url || 'https://www.linkedin.com/in/chaitanya-anmulwar';
+    socialLinks.find((s) => s.platform.toLowerCase() === 'linkedin')?.url || '#';
 
   const handleNavClick = (
     e: React.MouseEvent<HTMLAnchorElement>,
@@ -147,7 +147,7 @@ export const Navbar: React.FC = () => {
                 ${isDark ? 'text-[#f1f0ec]' : 'text-[#12161b]'}
               `}
             >
-              {profileData.name}
+              {profile?.name}
             </span>
           </div>
         </a>

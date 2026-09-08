@@ -8,7 +8,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { GithubIcon } from '../components/icons/SocialIcons';
-import { projectsData } from '../data/projects';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 import type { Project } from '../types/portfolio';
 
 interface ProjectsProps {
@@ -18,6 +18,8 @@ interface ProjectsProps {
 export const Projects: React.FC<ProjectsProps> = ({
   onSelectProject,
 }) => {
+  const { projects } = usePortfolioData();
+
   /*
    * Keeps track of the currently displayed image
    * for each project independently.
@@ -32,12 +34,12 @@ export const Projects: React.FC<ProjectsProps> = ({
   useEffect(() => {
     const initialIndexes: Record<string, number> = {};
 
-    projectsData.forEach((project) => {
+    projects.forEach((project) => {
       initialIndexes[project.id] = 0;
     });
 
     setImageIndexes(initialIndexes);
-  }, []);
+  }, [projects]);
 
   const getProjectImages = (project: Project) => {
     const projectWithImages = project as Project & {
@@ -154,7 +156,7 @@ export const Projects: React.FC<ProjectsProps> = ({
             PROJECTS
         ================================================== */}
         <div className="space-y-20 md:space-y-28">
-          {projectsData.map((project, index) => {
+          {projects.map((project, index) => {
             const isReversed = index % 2 === 1;
 
             const projectImages =
@@ -494,7 +496,7 @@ export const Projects: React.FC<ProjectsProps> = ({
                 </div>
 
                 {/* Divider */}
-                {index < projectsData.length - 1 && (
+                {index < projects.length - 1 && (
                   <div className="mt-20 border-b border-slate-200 dark:border-[#303941] md:mt-28" />
                 )}
               </motion.article>

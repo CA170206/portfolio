@@ -8,11 +8,13 @@ import {
   ExternalLink,
   X,
 } from 'lucide-react';
-import { experienceData } from '../data/experience';
-import offerLetter from '../assets/experience/offer-letter.png';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 
 const Experience = () => {
+  const { experience } = usePortfolioData();
   const [showOfferLetter, setShowOfferLetter] = useState(false);
+  const firstExp = experience[0];
+  const offerLetterSrc = firstExp?.offerLetterUrl || '';
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -82,7 +84,7 @@ const Experience = () => {
               {/* Timeline line */}
               <div className="absolute bottom-2 left-[7px] top-2 hidden w-px bg-slate-300 dark:bg-[#303841] sm:block" />
 
-              {experienceData.map((item, index) => (
+              {experience.map((item, index) => (
                 <motion.article
                   key={item.id}
                   initial={{ opacity: 0, y: 25 }}
@@ -232,11 +234,13 @@ const Experience = () => {
                 <div className="relative overflow-hidden rounded-xl border border-slate-200 bg-white p-2 shadow-sm transition-all duration-300 group-hover:-translate-y-1 dark:border-[#303841] dark:bg-[#181c21]">
                   {/* Image */}
                   <div className="relative overflow-hidden rounded-lg bg-white dark:bg-slate-950">
-                    <img
-                      src={offerLetter}
-                      alt="Offer Letter"
-                      className="block h-auto w-full transition-transform duration-500 group-hover:scale-[1.025]"
-                    />
+                    {offerLetterSrc && (
+                      <img
+                        src={offerLetterSrc}
+                        alt="Offer Letter"
+                        className="block h-auto w-full transition-transform duration-500 group-hover:scale-[1.025]"
+                      />
+                    )}
 
                     {/* Hover overlay */}
                     <div className="absolute inset-0 flex items-center justify-center bg-slate-950/60 opacity-0 transition-opacity duration-300 group-hover:opacity-100 dark:bg-[rgba(18,22,27,0.72)]">
@@ -253,11 +257,11 @@ const Experience = () => {
               <div className="mt-4 flex items-center justify-between px-1">
                 <div>
                   <p className="text-sm font-medium text-slate-900 dark:text-[#d7dce1]">
-                    Web Development
+                    {firstExp?.position || 'Web Development'}
                   </p>
 
                   <p className="mt-1 text-xs text-slate-500 dark:text-[#707b87]">
-                    Labmentix · 6 Month Internship
+                    {firstExp ? `${firstExp.company} · ${firstExp.employmentType}` : 'Labmentix · 6 Month Internship'}
                   </p>
                 </div>
 
@@ -331,11 +335,13 @@ const Experience = () => {
                 {/* Image Area */}
                 <div className="min-h-0 flex-1 overflow-auto bg-[#e9e8e4] p-4 dark:bg-[#181d23] sm:p-6">
                   <div className="flex min-h-full items-center justify-center">
-                    <img
-                      src={offerLetter}
-                      alt="Offer Letter"
-                      className="block h-auto w-auto max-w-full object-contain"
-                    />
+                    {offerLetterSrc && (
+                      <img
+                        src={offerLetterSrc}
+                        alt="Offer Letter"
+                        className="block h-auto w-auto max-w-full object-contain"
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -343,11 +349,11 @@ const Experience = () => {
                 <div className="flex shrink-0 items-center justify-between gap-4 border-t border-[#d7d9dc] bg-[#eeede9] px-4 py-3.5 dark:border-[#303841] dark:bg-[#181d23] sm:px-6 sm:py-4">
                   <div className="min-w-0">
                     <p className="truncate text-xs font-semibold text-[#20242a] dark:text-[#f4f5f6]">
-                      Web Development
+                      {firstExp?.position || 'Web Development'}
                     </p>
 
                     <p className="mt-1 text-[11px] text-[#69737e] dark:text-[#707b87]">
-                      Labmentix · 6 Month Internship
+                      {firstExp ? `${firstExp.company} · ${firstExp.employmentType}` : 'Labmentix · 6 Month Internship'}
                     </p>
                   </div>
 

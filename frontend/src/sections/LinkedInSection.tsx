@@ -9,15 +9,26 @@ import {
   UserPlus,
 } from 'lucide-react';
 import { LinkedinIcon } from '../components/icons/SocialIcons';
-import { socialLinks } from '../data/socials';
-import { profileData } from '../data/profile';
+import { usePortfolioData } from '../context/PortfolioDataContext';
+
+const LINKEDIN_STATS = {
+  connections: '500+',
+  followers: 1000,
+  role: 'Web Development Intern',
+  company: 'Labmentix',
+  education: 'B.Tech CSE',
+  university: 'Sandip University',
+  location: 'Greater Nashik Area',
+};
 
 export const LinkedInSection: React.FC = () => {
+  const { profile, socialLinks } = usePortfolioData();
+
   const linkedinUrl =
-    socialLinks.find((item) => item.platform === 'LinkedIn')?.url ||
+    socialLinks.find((item) => item.platform.toLowerCase() === 'linkedin')?.url ||
     'https://linkedin.com';
 
-  const linkedinStats = profileData.linkedinStats;
+  const linkedinStats = LINKEDIN_STATS;
 
   return (
     <section
@@ -60,18 +71,24 @@ export const LinkedInSection: React.FC = () => {
           <div className="relative px-5 pb-7 sm:px-8">
             {/* Profile Photo */}
             <div className="-mt-14 sm:-mt-16">
-              <img
-                src={profileData.avatar}
-                alt={profileData.name}
-                className="h-28 w-28 rounded-full border-4 border-white dark:border-[#181c21] bg-white dark:bg-[#181c21] object-cover shadow-md sm:h-32 sm:w-32 transition-colors"
-              />
+              {profile?.avatar ? (
+                <img
+                  src={profile.avatar}
+                  alt={profile.name || 'Profile'}
+                  className="h-28 w-28 rounded-full border-4 border-white dark:border-[#181c21] bg-white dark:bg-[#181c21] object-cover shadow-md sm:h-32 sm:w-32 transition-colors"
+                />
+              ) : (
+                <div className="h-28 w-28 rounded-full border-4 border-white dark:border-[#181c21] bg-slate-200 dark:bg-[#181c21] flex items-center justify-center sm:h-32 sm:w-32">
+                  <span className="text-xl font-bold text-slate-400">{profile?.name?.charAt(0) || 'C'}</span>
+                </div>
+              )}
             </div>
 
             {/* Profile Header */}
             <div className="mt-4 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-[#f4f5f6]">
-                  {profileData.name}
+                  {profile?.name}
                 </h2>
 
                 <p className="mt-1 max-w-2xl text-base text-slate-600 dark:text-[#aeb6c0]">
@@ -175,7 +192,7 @@ export const LinkedInSection: React.FC = () => {
               </h3>
 
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-[#aeb6c0]">
-                {profileData.shortBio}
+                {profile?.shortBio}
               </p>
             </div>
 

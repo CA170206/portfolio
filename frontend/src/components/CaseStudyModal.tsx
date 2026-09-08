@@ -14,7 +14,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { GithubIcon } from './icons/SocialIcons';
-import { profileData } from '../data/profile';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 import type { Project } from '../types/portfolio';
 
 interface CaseStudyModalProps {
@@ -26,6 +26,7 @@ export const CaseStudyModal: React.FC<CaseStudyModalProps> = ({
   project,
   onClose,
 }) => {
+  const { profile } = usePortfolioData();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageDirection, setImageDirection] = useState(0);
 
@@ -576,8 +577,7 @@ export const CaseStudyModal: React.FC<CaseStudyModalProps> = ({
           {/* Modal footer */}
           <div className="flex flex-col gap-4 border-t border-[#d7d9dc] bg-[#eeede9] px-6 py-5 dark:border-[#303841] dark:bg-[#181d23] sm:flex-row sm:items-center sm:justify-between">
             <span className="text-xs text-[#69737e] dark:text-[#7f8995]">
-              {profileData.roleBadge ||
-                'Full-Stack Developer'}
+              {profile?.roleBadge}
             </span>
 
             <button

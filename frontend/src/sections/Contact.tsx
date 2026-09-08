@@ -10,14 +10,14 @@ import {
   Send,
 } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from '../components/icons/SocialIcons';
-import { profileData } from '../data/profile';
-import { socialLinks } from '../data/socials';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 
 interface ContactProps {
   onShowToast?: (message: string, type?: 'success' | 'info') => void;
 }
 
 export const Contact: React.FC<ContactProps> = ({ onShowToast }) => {
+  const { profile, socialLinks } = usePortfolioData();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -29,22 +29,21 @@ export const Contact: React.FC<ContactProps> = ({ onShowToast }) => {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const github =
-    socialLinks.find((item) => item.platform === 'GitHub')?.url ||
-    'https://github.com/CA170206';
+    socialLinks.find((item) => item.platform.toLowerCase() === 'github')?.url || '#';
 
   const linkedin =
-    socialLinks.find((item) => item.platform === 'LinkedIn')?.url ||
-    'https://linkedin.com/in/chaitanya-anmulwar';
+    socialLinks.find((item) => item.platform.toLowerCase() === 'linkedin')?.url || '#';
 
   const handleCopyEmail = async () => {
+    if (!profile?.email) return;
     try {
-      await navigator.clipboard.writeText(profileData.email);
+      await navigator.clipboard.writeText(profile.email);
 
       setCopied(true);
 
       if (onShowToast) {
         onShowToast(
-          `Copied ${profileData.email} to clipboard!`,
+          `Copied ${profile.email} to clipboard!`,
           'success'
         );
       }
@@ -93,7 +92,7 @@ export const Contact: React.FC<ContactProps> = ({ onShowToast }) => {
     );
 
     window.location.href =
-      `mailto:${profileData.email}?subject=${subject}&body=${body}`;
+      `mailto:${profile?.email || ''}?subject=${subject}&body=${body}`;
 
     if (onShowToast) {
       onShowToast(
@@ -195,7 +194,7 @@ export const Contact: React.FC<ContactProps> = ({ onShowToast }) => {
 
               <div className="mt-3 flex items-center justify-between gap-4 border-b border-slate-200 dark:border-[#303841] pb-4">
                 <span className="min-w-0 truncate text-sm font-medium text-slate-900 dark:text-[#f4f5f6]">
-                  {profileData.email}
+                  {profile?.email}
                 </span>
 
                 <button
@@ -229,7 +228,7 @@ export const Contact: React.FC<ContactProps> = ({ onShowToast }) => {
                 </p>
 
                 <p className="mt-2 text-sm text-slate-700 dark:text-[#aeb6c0]">
-                  {profileData.location}
+                  {profile?.location}
                 </p>
               </div>
             </div>
@@ -244,7 +243,7 @@ export const Contact: React.FC<ContactProps> = ({ onShowToast }) => {
                 </p>
 
                 <p className="mt-2 text-sm text-slate-700 dark:text-[#aeb6c0]">
-                  {profileData.status}
+                  {profile?.status || profile?.shortBio}
                 </p>
               </div>
             </div>

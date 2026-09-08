@@ -2,15 +2,16 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowUpRight, Mail, Layers3, Server, Database } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from '../components/icons/SocialIcons';
-import { profileData } from '../data/profile';
-import { socialLinks } from '../data/socials';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export const Hero: React.FC = () => {
+  const { profile, socialLinks } = usePortfolioData();
+
   const github =
-    socialLinks.find((s) => s.platform === 'GitHub')?.url || '#';
+    socialLinks.find((s) => s.platform.toLowerCase() === 'github')?.url || '#';
 
   const linkedin =
-    socialLinks.find((s) => s.platform === 'LinkedIn')?.url || '#';
+    socialLinks.find((s) => s.platform.toLowerCase() === 'linkedin')?.url || '#';
 
   const scrollToSection = (id: string) => {
     const el = document.getElementById(id);
@@ -60,7 +61,7 @@ export const Hero: React.FC = () => {
               <span className="h-px w-9 bg-[#d6a83a]" />
 
               <span className="text-xs font-medium uppercase tracking-[0.22em] text-[#b48316] dark:text-[#d6a83a]">
-                Full-Stack Developer
+                {profile?.roleBadge}
               </span>
             </div>
 
@@ -68,16 +69,14 @@ export const Hero: React.FC = () => {
             <h1 className="max-w-4xl text-[2.9rem] font-semibold leading-[1.04] tracking-[-0.045em] text-slate-900 dark:text-[#f4f5f6] sm:text-6xl md:text-7xl lg:text-[5.25rem]">
               Hi, I&apos;m{' '}
               <span className="text-[#b48316] dark:text-[#d6a83a]">
-                {profileData.name}
+                {profile?.name}
               </span>
               .
             </h1>
 
             {/* Description */}
             <p className="mt-7 max-w-2xl text-base leading-7 text-slate-600 dark:text-[#aeb6c0] sm:text-lg sm:leading-8">
-              I&apos;m a final-year computer science student building
-              full-stack web applications with a focus on practical
-              functionality, clean interfaces, and thoughtful engineering.
+              {profile?.shortBio || ''}
             </p>
 
             {/* CTA Buttons */}

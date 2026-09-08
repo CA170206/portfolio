@@ -21,13 +21,19 @@ import { Contact } from './sections/Contact';
 
 import type { Project, CertificateItem } from './types/portfolio';
 
-// Admin CMS imports
 import { AuthProvider } from './admin/context/AuthContext';
+import { PortfolioDataProvider } from './context/PortfolioDataContext';
 import { ProtectedRoute } from './admin/components/ProtectedRoute';
 import { LoginPage } from './admin/pages/LoginPage';
 import { AdminLayout } from './admin/components/AdminLayout';
 import { DashboardOverview } from './admin/pages/DashboardOverview';
-import { AdminPlaceholder } from './admin/pages/AdminPlaceholder';
+import { ProfileEditor } from './admin/pages/ProfileEditor';
+import { ProjectsManager } from './admin/pages/ProjectsManager';
+import { CertificatesManager } from './admin/pages/CertificatesManager';
+import { ExperienceManager } from './admin/pages/ExperienceManager';
+import { EducationManager } from './admin/pages/EducationManager';
+import { SkillsManager } from './admin/pages/SkillsManager';
+import { SocialLinksManager } from './admin/pages/SocialLinksManager';
 
 /**
  * Public portfolio view containing all public sections.
@@ -121,7 +127,14 @@ export function App() {
         <BrowserRouter>
           <Routes>
             {/* Public Portfolio Route */}
-            <Route path="/" element={<PublicPortfolio />} />
+            <Route
+              path="/"
+              element={
+                <PortfolioDataProvider>
+                  <PublicPortfolio />
+                </PortfolioDataProvider>
+              }
+            />
 
             {/* Admin Authentication */}
             <Route path="/admin/login" element={<LoginPage />} />
@@ -136,34 +149,13 @@ export function App() {
               }
             >
               <Route index element={<DashboardOverview />} />
-              <Route
-                path="profile"
-                element={<AdminPlaceholder title="Profile Management" />}
-              />
-              <Route
-                path="projects"
-                element={<AdminPlaceholder title="Projects Management" />}
-              />
-              <Route
-                path="certificates"
-                element={<AdminPlaceholder title="Certificates Management" />}
-              />
-              <Route
-                path="experience"
-                element={<AdminPlaceholder title="Experience Management" />}
-              />
-              <Route
-                path="education"
-                element={<AdminPlaceholder title="Education Management" />}
-              />
-              <Route
-                path="skills"
-                element={<AdminPlaceholder title="Skills Management" />}
-              />
-              <Route
-                path="social-links"
-                element={<AdminPlaceholder title="Social Links Management" />}
-              />
+              <Route path="profile" element={<ProfileEditor />} />
+              <Route path="projects" element={<ProjectsManager />} />
+              <Route path="certificates" element={<CertificatesManager />} />
+              <Route path="experience" element={<ExperienceManager />} />
+              <Route path="education" element={<EducationManager />} />
+              <Route path="skills" element={<SkillsManager />} />
+              <Route path="social-links" element={<SocialLinksManager />} />
             </Route>
 
             {/* Catch-all fallback */}

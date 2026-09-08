@@ -8,15 +8,16 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from '../components/icons/SocialIcons';
-import { profileData } from '../data/profile';
-import { socialLinks } from '../data/socials';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export const About: React.FC = () => {
+  const { profile, projects, experience, socialLinks } = usePortfolioData();
+
   const github =
-    socialLinks.find((s) => s.platform === 'GitHub')?.url || 'https://github.com/CA170206';
+    socialLinks.find((s) => s.platform.toLowerCase() === 'github')?.url || '#';
 
   const linkedin =
-    socialLinks.find((s) => s.platform === 'LinkedIn')?.url || 'https://www.linkedin.com/in/chaitanya-anmulwar';
+    socialLinks.find((s) => s.platform.toLowerCase() === 'linkedin')?.url || '#';
 
   const pillars = [
     {
@@ -109,11 +110,17 @@ export const About: React.FC = () => {
 
                 <div className="relative overflow-hidden border border-slate-300 dark:border-[#39424b] bg-white dark:bg-[#1d2329] p-2 shadow-sm dark:shadow-none">
                   <div className="relative aspect-square overflow-hidden">
-                    <img
-                      src={profileData.avatar}
-                      alt={profileData.name}
-                      className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
-                    />
+                    {profile?.avatar ? (
+                      <img
+                        src={profile.avatar}
+                        alt={profile.name || 'Profile'}
+                        className="h-full w-full object-cover transition-transform duration-700 hover:scale-[1.03]"
+                      />
+                    ) : (
+                      <div className="h-full w-full bg-slate-200 dark:bg-[#202730] flex items-center justify-center text-slate-400">
+                        <span>{profile?.name || 'Portfolio'}</span>
+                      </div>
+                    )}
 
                     {/* Soft bottom gradient */}
                     <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/50 dark:from-[#11151a]/70 to-transparent" />
@@ -164,9 +171,13 @@ export const About: React.FC = () => {
           >
             {/* Story */}
             <div className="max-w-3xl space-y-5 text-[15px] leading-7 text-slate-600 dark:text-[#aeb6c0] sm:text-base">
-              {profileData.aboutStory.map((paragraph, idx) => (
-                <p key={idx}>{paragraph}</p>
-              ))}
+              {profile?.aboutStory && profile.aboutStory.length > 0 ? (
+                profile.aboutStory.map((paragraph, idx) => (
+                  <p key={idx}>{paragraph}</p>
+                ))
+              ) : (
+                <p className="text-slate-500 italic">No biography available yet.</p>
+              )}
             </div>
 
             {/* -------------------------------------------------
@@ -219,7 +230,28 @@ export const About: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-y-8 sm:grid-cols-4 sm:gap-x-8">
-                {profileData.quickStats.map((stat) => (
+                {[
+                  {
+                    label: 'Full-Stack Projects',
+                    value: projects.length > 0 ? String(projects.length) : '2',
+                    description: 'End-to-end production-grade applications with databases',
+                  },
+                  {
+                    label: experience[0]?.company ? `Internship Experience - ${experience[0].company}` : 'Internship Experience',
+                    value: '6-Month',
+                    description: 'Hands-on remote full-stack engineering work',
+                  },
+                  {
+                    label: 'Academic Status',
+                    value: 'Final Year',
+                    description: 'B.Tech in Computer Science & Engineering (2023 – 2027)',
+                  },
+                  {
+                    label: 'Primary Stack',
+                    value: 'React & Node',
+                    description: 'PostgreSQL, Javascript, Express, Tailwind CSS',
+                  },
+                ].map((stat) => (
                   <div key={stat.label}>
                     <div className="text-3xl font-semibold tracking-[-0.04em] text-slate-900 dark:text-[#f1f3f5]">
                       {stat.value}

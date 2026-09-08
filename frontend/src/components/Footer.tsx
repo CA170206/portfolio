@@ -1,10 +1,11 @@
 import React from 'react';
 import { ArrowUp, Mail } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from './icons/SocialIcons';
-import { profileData } from '../data/profile';
-import { socialLinks } from '../data/socials';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export const Footer: React.FC = () => {
+  const { profile, socialLinks } = usePortfolioData();
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -13,12 +14,10 @@ export const Footer: React.FC = () => {
   };
 
   const github =
-    socialLinks.find((item) => item.platform === 'GitHub')?.url ||
-    'https://github.com/CA170206';
+    socialLinks.find((item) => item.platform.toLowerCase() === 'github')?.url || '#';
 
   const linkedin =
-    socialLinks.find((item) => item.platform === 'LinkedIn')?.url ||
-    'https://linkedin.com/in/chaitanya-anmulwar';
+    socialLinks.find((item) => item.platform.toLowerCase() === 'linkedin')?.url || '#';
 
   return (
     <footer className="relative overflow-hidden border-t border-slate-200 dark:border-[#303841] bg-slate-50 dark:bg-[#12161b] text-slate-600 dark:text-[#aeb6c0] transition-colors duration-200">
@@ -41,7 +40,7 @@ export const Footer: React.FC = () => {
               <span className="h-2 w-2 bg-[#d6a83a]" />
 
               <span className="text-base font-semibold tracking-tight text-slate-900 dark:text-[#f4f5f6]">
-                {profileData.name}
+                {profile?.name}
               </span>
             </div>
 
@@ -78,7 +77,7 @@ export const Footer: React.FC = () => {
             </a>
 
             <a
-              href={`mailto:${profileData.email}`}
+              href={profile?.email ? `mailto:${profile.email}` : '#contact'}
               className="group inline-flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-[#8f99a5] transition-colors hover:text-slate-900 dark:hover:text-[#f4f5f6]"
               aria-label="Email Me"
             >
@@ -103,7 +102,7 @@ export const Footer: React.FC = () => {
         {/* Bottom row */}
         <div className="flex flex-col gap-3 pt-6 text-[11px] text-slate-400 dark:text-[#69737e] sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {profileData.name}. All rights
+            © {new Date().getFullYear()} {profile?.name}. All rights
             reserved.
           </p>
 

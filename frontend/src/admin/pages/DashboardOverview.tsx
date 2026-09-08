@@ -8,8 +8,7 @@ import {
   Code2,
   Share2,
   User,
-  ArrowRight,
-  Sparkles,
+  ArrowUpRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -25,6 +24,7 @@ interface ResourceCounts {
 
 export const DashboardOverview: React.FC = () => {
   const { admin } = useAuth();
+
   const [counts, setCounts] = useState<ResourceCounts>({
     projects: null,
     certificates: null,
@@ -33,53 +33,74 @@ export const DashboardOverview: React.FC = () => {
     skills: null,
     socialLinks: null,
   });
-  const [isLoadingCounts, setIsLoadingCounts] = useState<boolean>(true);
+
+  const [isLoadingCounts, setIsLoadingCounts] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchCounts = async () => {
       try {
-        const [projRes, certRes, expRes, eduRes, skillRes, socRes] =
-          await Promise.allSettled([
-            apiClient.get<unknown[]>('/projects'),
-            apiClient.get<unknown[]>('/certificates'),
-            apiClient.get<unknown[]>('/experience'),
-            apiClient.get<unknown[]>('/education'),
-            apiClient.get<unknown[]>('/skills'),
-            apiClient.get<unknown[]>('/social-links'),
-          ]);
+        const [
+          projRes,
+          certRes,
+          expRes,
+          eduRes,
+          skillRes,
+          socRes,
+        ] = await Promise.allSettled([
+          apiClient.get<unknown[]>('/projects'),
+          apiClient.get<unknown[]>('/certificates'),
+          apiClient.get<unknown[]>('/experience'),
+          apiClient.get<unknown[]>('/education'),
+          apiClient.get<unknown[]>('/skills'),
+          apiClient.get<unknown[]>('/social-links'),
+        ]);
 
+        if (!isMounted) return;
+
+        setCounts({
+          projects:
+            projRes.status === 'fulfilled' && projRes.value.success
+              ? (projRes.value.data as unknown[])?.length ?? 0
+              : 0,
+
+          certificates:
+            certRes.status === 'fulfilled' && certRes.value.success
+              ? (certRes.value.data as unknown[])?.length ?? 0
+              : 0,
+
+          experience:
+            expRes.status === 'fulfilled' && expRes.value.success
+              ? (expRes.value.data as unknown[])?.length ?? 0
+              : 0,
+
+          education:
+            eduRes.status === 'fulfilled' && eduRes.value.success
+              ? (eduRes.value.data as unknown[])?.length ?? 0
+              : 0,
+
+          skills:
+            skillRes.status === 'fulfilled' && skillRes.value.success
+              ? (skillRes.value.data as unknown[])?.length ?? 0
+              : 0,
+
+          socialLinks:
+            socRes.status === 'fulfilled' && socRes.value.success
+              ? (socRes.value.data as unknown[])?.length ?? 0
+              : 0,
+        });
+      } catch {
         if (isMounted) {
           setCounts({
-            projects:
-              projRes.status === 'fulfilled' && projRes.value.success
-                ? (projRes.value.data as unknown[])?.length ?? 0
-                : 0,
-            certificates:
-              certRes.status === 'fulfilled' && certRes.value.success
-                ? (certRes.value.data as unknown[])?.length ?? 0
-                : 0,
-            experience:
-              expRes.status === 'fulfilled' && expRes.value.success
-                ? (expRes.value.data as unknown[])?.length ?? 0
-                : 0,
-            education:
-              eduRes.status === 'fulfilled' && eduRes.value.success
-                ? (eduRes.value.data as unknown[])?.length ?? 0
-                : 0,
-            skills:
-              skillRes.status === 'fulfilled' && skillRes.value.success
-                ? (skillRes.value.data as unknown[])?.length ?? 0
-                : 0,
-            socialLinks:
-              socRes.status === 'fulfilled' && socRes.value.success
-                ? (socRes.value.data as unknown[])?.length ?? 0
-                : 0,
+            projects: 0,
+            certificates: 0,
+            experience: 0,
+            education: 0,
+            skills: 0,
+            socialLinks: 0,
           });
         }
-      } catch {
-        // Leave counts as 0 on failure
       } finally {
         if (isMounted) {
           setIsLoadingCounts(false);
@@ -94,137 +115,212 @@ export const DashboardOverview: React.FC = () => {
     };
   }, []);
 
-  const resourceCards = [
+  const resourceRows = [
     {
       label: 'Projects',
       count: counts.projects,
       to: '/admin/projects',
       icon: FolderKanban,
-      description: 'Showcase applications and case studies',
-    },
-    {
-      label: 'Certificates',
-      count: counts.certificates,
-      to: '/admin/certificates',
-      icon: Award,
-      description: 'Professional credentials and accreditations',
+      description: 'Applications and case studies',
     },
     {
       label: 'Experience',
       count: counts.experience,
       to: '/admin/experience',
       icon: Briefcase,
-      description: 'Career positions, internships, and roles',
+      description: 'Internships and professional roles',
+    },
+    {
+      label: 'Certificates',
+      count: counts.certificates,
+      to: '/admin/certificates',
+      icon: Award,
+      description: 'Credentials and certifications',
     },
     {
       label: 'Education',
       count: counts.education,
       to: '/admin/education',
       icon: GraduationCap,
-      description: 'Academic background and coursework',
+      description: 'Academic history',
     },
     {
       label: 'Skills',
       count: counts.skills,
       to: '/admin/skills',
       icon: Code2,
-      description: 'Categorized technical capabilities',
+      description: 'Technical skills and categories',
     },
     {
       label: 'Social Links',
       count: counts.socialLinks,
       to: '/admin/social-links',
       icon: Share2,
-      description: 'Public profile and contact links',
+      description: 'Public profile links',
     },
   ];
 
   return (
-    <div className="space-y-8">
-      {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-xl border border-zinc-800 bg-gradient-to-r from-[#111722] via-[#0f141d] to-[#121822] p-6 md:p-8">
-        <div className="relative z-10 max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-md border border-[#d6a83a]/30 bg-[#d6a83a]/10 px-2.5 py-1 text-[11px] font-medium text-[#e2b94f]">
-            <Sparkles className="h-3 w-3" />
-            <span>Admin Console</span>
-          </div>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight text-white md:text-3xl">
-            Welcome back, {admin?.name || 'Administrator'}
-          </h1>
-          <p className="mt-1.5 text-sm text-zinc-400">
-            Manage your portfolio content, projects, experience, and personal
-            profile from one central place.
-          </p>
+    <div className="relative">
+      {/* Very subtle technical grid */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 -z-0 opacity-[0.025] dark:opacity-[0.035]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)',
+          backgroundSize: '36px 36px',
+        }}
+      />
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+      <div className="relative z-10 space-y-8">
+        {/* Header */}
+        <header className="border-b border-slate-200 pb-6 dark:border-[#303841]">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#d6a83a]">
+                Portfolio CMS
+              </p>
+
+              <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-[#f4f5f6]">
+                Content Overview
+              </h1>
+
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500 dark:text-[#aeb6c0]">
+                Manage the content displayed across your portfolio.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 border border-slate-300 bg-white px-3.5 py-2 text-xs font-medium text-slate-700 transition-colors hover:border-[#d6a83a] hover:text-slate-900 dark:border-[#303841] dark:bg-[#181d23] dark:text-[#aeb6c0] dark:hover:border-[#d6a83a] dark:hover:text-[#f4f5f6]"
+              >
+                View Portfolio
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </a>
+
+              <Link
+                to="/admin/profile"
+                className="inline-flex items-center gap-2 bg-[#d6a83a] px-3.5 py-2 text-xs font-semibold text-[#12161b] transition-colors hover:bg-[#e2b94f]"
+              >
+                <User className="h-3.5 w-3.5" />
+                Edit Profile
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {/* Admin identity / status row */}
+        <section className="flex flex-col gap-3 border-b border-slate-200 pb-6 dark:border-[#303841] sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-[#7f8995]">
+              Signed in as
+            </p>
+
+            <p className="mt-1 text-sm font-medium text-slate-800 dark:text-[#f4f5f6]">
+              {admin?.name || 'Administrator'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-[#7f8995]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#d6a83a]" />
+            <span>CMS connected</span>
+          </div>
+        </section>
+
+        {/* Content */}
+        <section>
+          <div className="mb-4 flex items-end justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#d6a83a]">
+                Content
+              </p>
+
+              <h2 className="mt-1 text-base font-semibold text-slate-900 dark:text-[#f4f5f6]">
+                Portfolio sections
+              </h2>
+            </div>
+
+            <span className="hidden text-[10px] uppercase tracking-[0.15em] text-slate-400 dark:text-[#7f8995] sm:block">
+              Manage
+            </span>
+          </div>
+
+          <div className="overflow-hidden border border-slate-200 bg-white dark:border-[#303841] dark:bg-[#181d23]">
+            {resourceRows.map((item, index) => {
+              const Icon = item.icon;
+
+              return (
+                <Link
+                  key={item.label}
+                  to={item.to}
+                  className={`group flex items-center gap-4 px-4 py-4 transition-colors hover:bg-slate-50 dark:hover:bg-[#1c2229] ${index !== resourceRows.length - 1
+                      ? 'border-b border-slate-200 dark:border-[#303841]'
+                      : ''
+                    }`}
+                >
+                  {/* Icon */}
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center border border-slate-200 bg-slate-50 text-[#d6a83a] dark:border-[#303841] dark:bg-[#12161b]">
+                    <Icon className="h-4 w-4" strokeWidth={1.7} />
+                  </div>
+
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium text-slate-900 transition-colors group-hover:text-[#a47d18] dark:text-[#f4f5f6] dark:group-hover:text-[#d6a83a]">
+                        {item.label}
+                      </h3>
+
+                      <span className="font-mono text-[11px] text-slate-400 dark:text-[#7f8995]">
+                        {isLoadingCounts ? '—' : item.count ?? 0}
+                      </span>
+                    </div>
+
+                    <p className="mt-0.5 truncate text-xs text-slate-500 dark:text-[#7f8995]">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  {/* Arrow */}
+                  <ArrowUpRight
+                    className="h-4 w-4 shrink-0 text-slate-300 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#d6a83a] dark:text-[#4b5560]"
+                    strokeWidth={1.7}
+                  />
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Profile shortcut */}
+        <section className="border border-slate-200 bg-slate-50/70 dark:border-[#303841] dark:bg-[#181d23]">
+          <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#d6a83a]">
+                Profile
+              </p>
+
+              <h2 className="mt-1 text-sm font-semibold text-slate-900 dark:text-[#f4f5f6]">
+                Update the information shown on your portfolio
+              </h2>
+
+              <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-[#7f8995]">
+                Name, bio, profile image, location and other personal details.
+              </p>
+            </div>
+
             <Link
               to="/admin/profile"
-              className="inline-flex items-center gap-2 rounded-lg bg-[#d6a83a] px-3.5 py-2 text-xs font-semibold text-zinc-950 transition-colors hover:bg-[#e2b94f]"
+              className="inline-flex shrink-0 items-center justify-center gap-2 border border-slate-300 bg-white px-4 py-2.5 text-xs font-medium text-slate-700 transition-colors hover:border-[#d6a83a] hover:text-slate-900 dark:border-[#303841] dark:bg-[#12161b] dark:text-[#aeb6c0] dark:hover:border-[#d6a83a] dark:hover:text-[#f4f5f6]"
             >
-              <User className="h-3.5 w-3.5" />
-              <span>Edit Profile</span>
+              Open Profile
+              <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
-            <a
-              href="/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-800 bg-[#141b24] px-3.5 py-2 text-xs font-medium text-zinc-300 transition-colors hover:border-zinc-700 hover:text-white"
-            >
-              <span>View Live Portfolio</span>
-              <ArrowRight className="h-3 w-3" />
-            </a>
           </div>
-        </div>
-      </div>
-
-      {/* Resource Count Cards Grid */}
-      <div>
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-zinc-400">
-            Portfolio Resources
-          </h2>
-          <span className="text-xs text-zinc-500 font-mono">Real-time counts</span>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {resourceCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <Link
-                key={card.label}
-                to={card.to}
-                className="group rounded-xl border border-zinc-800/80 bg-[#11161f] p-5 transition-all hover:border-[#d6a83a]/40 hover:bg-[#131923] hover:shadow-lg hover:shadow-black/20"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-[#0c1017] text-[#d6a83a] group-hover:border-[#d6a83a]/30">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="font-mono text-2xl font-bold text-white">
-                    {isLoadingCounts ? (
-                      <span className="inline-block h-6 w-8 animate-pulse rounded bg-zinc-800" />
-                    ) : (
-                      card.count ?? 0
-                    )}
-                  </span>
-                </div>
-
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-zinc-100 group-hover:text-[#e2b94f] transition-colors">
-                    {card.label}
-                  </h3>
-                  <p className="mt-1 text-xs text-zinc-500 line-clamp-1">
-                    {card.description}
-                  </p>
-                </div>
-
-                <div className="mt-3 flex items-center gap-1 text-[11px] font-medium text-zinc-400 group-hover:text-zinc-200">
-                  <span>Manage {card.label.toLowerCase()}</span>
-                  <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-1" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+        </section>
       </div>
     </div>
   );

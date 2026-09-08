@@ -7,9 +7,10 @@ import {
   Wrench,
   Sparkles,
 } from 'lucide-react';
-import { skillsData } from '../data/skills';
+import { usePortfolioData } from '../context/PortfolioDataContext';
 
 export const Skills: React.FC = () => {
+  const { skills } = usePortfolioData();
   const getCategoryIcon = (id: string) => {
     switch (id) {
       case 'frontend':
@@ -70,7 +71,7 @@ export const Skills: React.FC = () => {
 
         {/* Skills */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {skillsData.map((category, index) => (
+          {skills.map((category, index) => (
             <motion.div
               key={category.id}
               initial={{ opacity: 0, y: 20 }}
