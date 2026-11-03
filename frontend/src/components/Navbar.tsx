@@ -147,7 +147,7 @@ export const Navbar: React.FC = () => {
                 ${isDark ? 'text-[#f1f0ec]' : 'text-[#12161b]'}
               `}
             >
-              {profile?.name}
+              {profile?.name || 'Chaitanya Anmulwar'}
             </span>
           </div>
         </a>

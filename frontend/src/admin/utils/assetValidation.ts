@@ -20,7 +20,17 @@ export const isValidAssetUrlOrPath = (value: string | null | undefined): boolean
   const trimmed = value.trim();
   if (!trimmed) return true;
 
-  // 1. Check local portfolio asset paths
+  // 1. Check data URLs (from device upload / file explorer)
+  if (trimmed.startsWith('data:image/')) {
+    return true;
+  }
+
+  // 2. Check blob URLs
+  if (trimmed.startsWith('blob:')) {
+    return true;
+  }
+
+  // 3. Check local portfolio asset paths
   if (
     trimmed.startsWith('/src/assets/') ||
     trimmed.startsWith('/assets/') ||
@@ -31,7 +41,7 @@ export const isValidAssetUrlOrPath = (value: string | null | undefined): boolean
     return relativePath.length > 0 && !/\s/.test(trimmed);
   }
 
-  // 2. Check absolute http/https URLs
+  // 4. Check absolute http/https URLs
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     try {
       const parsed = new URL(trimmed);

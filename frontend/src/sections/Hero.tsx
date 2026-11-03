@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowUpRight, Mail, Layers3, Server, Database } from 'lucide-react';
 import { GithubIcon, LinkedinIcon } from '../components/icons/SocialIcons';
 import { usePortfolioData } from '../context/PortfolioDataContext';
+import { profileData } from '../data/profile';
 
 export const Hero: React.FC = () => {
   const { profile, socialLinks } = usePortfolioData();
@@ -61,7 +62,7 @@ export const Hero: React.FC = () => {
               <span className="h-px w-9 bg-[#d6a83a]" />
 
               <span className="text-xs font-medium uppercase tracking-[0.22em] text-[#b48316] dark:text-[#d6a83a]">
-                {profile?.roleBadge}
+                {profile?.roleBadge || profileData.roleBadge}
               </span>
             </div>
 
@@ -69,14 +70,14 @@ export const Hero: React.FC = () => {
             <h1 className="max-w-4xl text-[2.9rem] font-semibold leading-[1.04] tracking-[-0.045em] text-slate-900 dark:text-[#f4f5f6] sm:text-6xl md:text-7xl lg:text-[5.25rem]">
               Hi, I&apos;m{' '}
               <span className="text-[#b48316] dark:text-[#d6a83a]">
-                {profile?.name}
+                {profile?.name || profileData.name}
               </span>
               .
             </h1>
 
             {/* Description */}
             <p className="mt-7 max-w-2xl text-base leading-7 text-slate-600 dark:text-[#aeb6c0] sm:text-lg sm:leading-8">
-              {profile?.shortBio || ''}
+              {profile?.shortBio || profileData.shortBio}
             </p>
 
             {/* CTA Buttons */}

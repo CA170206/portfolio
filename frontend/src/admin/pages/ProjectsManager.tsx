@@ -1,6 +1,7 @@
 import React, {
   useEffect,
   useState,
+  useRef,
 } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -20,6 +21,10 @@ import {
   X,
   Save,
   Check,
+  Upload,
+  HardDrive,
+  Link as LinkIcon,
+  FolderOpen,
 } from 'lucide-react';
 import { GithubIcon } from '../../components/icons/SocialIcons';
 import apiClient from '../api/client';
@@ -29,6 +34,7 @@ import {
   isValidWebOrDocumentUrl,
 } from '../utils/assetValidation';
 import { resolveAsset } from '../../api/publicPortfolioApi';
+import { fileToDataUrl, isImageFile } from '../utils/imageUpload';
 
 interface ProjectImage {
   id: string;
@@ -166,6 +172,157 @@ export const ProjectsManager: React.FC = () => {
   const [isDeleting, setIsDeleting] =
     useState<boolean>(false);
 
+  // Image manager modal state
+  const [imageInputMode, setImageInputMode] =
+    useState<'device' | 'url'>('device');
+  const [selectedFileMeta, setSelectedFileMeta] =
+    useState<{ fileName: string; formattedSize: string } | null>(null);
+  const [isProcessingFile, setIsProcessingFile] =
+    useState<boolean>(false);
+  const [imageDragActive, setImageDragActive] =
+    useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Form modal attached images state
+  interface FormAttachedImage {
+    id: string;
+    imageUrl: string;
+    altText: string;
+    isPrimary: boolean;
+    sortOrder: number;
+    source: 'device' | 'url';
+    fileName?: string;
+    formattedSize?: string;
+  }
+
+  const [formImages, setFormImages] = useState<FormAttachedImage[]>([]);
+  const [formImageMode, setFormImageMode] = useState<'device' | 'url'>('device');
+  const [formUrlInput, setFormUrlInput] = useState('');
+  const [formAltInput, setFormAltInput] = useState('');
+  const [isFormImageProcessing, setIsFormImageProcessing] = useState(false);
+  const [formDragActive, setFormDragActive] = useState(false);
+  const formFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDeviceFile = async (file: File) => {
+    if (!isImageFile(file)) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Please select a valid image file (PNG, JPG, WEBP, GIF, SVG).',
+      });
+      return;
+    }
+
+    setIsProcessingFile(true);
+    try {
+      const processed = await fileToDataUrl(file);
+      setNewImageUrl(processed.dataUrl);
+      setSelectedFileMeta({
+        fileName: processed.fileName,
+        formattedSize: processed.formattedSize,
+      });
+
+      if (!newImageAlt.trim()) {
+        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+        setNewImageAlt(nameWithoutExt);
+      }
+    } catch {
+      setStatusMessage({
+        type: 'error',
+        text: 'Failed to process image from device.',
+      });
+    } finally {
+      setIsProcessingFile(false);
+    }
+  };
+
+  const handleFormDeviceFiles = async (files: FileList | File[]) => {
+    setIsFormImageProcessing(true);
+    try {
+      const list = Array.from(files);
+      const newItems: FormAttachedImage[] = [];
+
+      for (let i = 0; i < list.length; i++) {
+        const file = list[i];
+        if (!isImageFile(file)) continue;
+
+        const processed = await fileToDataUrl(file);
+        const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+        newItems.push({
+          id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+          imageUrl: processed.dataUrl,
+          altText: nameWithoutExt,
+          isPrimary: false,
+          sortOrder: formImages.length + newItems.length,
+          source: 'device',
+          fileName: processed.fileName,
+          formattedSize: processed.formattedSize,
+        });
+      }
+
+      if (newItems.length > 0) {
+        setFormImages((prev) => {
+          const combined = [...prev, ...newItems];
+          if (!combined.some((img) => img.isPrimary)) {
+            combined[0].isPrimary = true;
+          }
+          return combined;
+        });
+      }
+    } catch {
+      setStatusMessage({
+        type: 'error',
+        text: 'Error processing selected device images.',
+      });
+    } finally {
+      setIsFormImageProcessing(false);
+    }
+  };
+
+  const handleAddFormUrlImage = () => {
+    const trimmed = formUrlInput.trim();
+    if (!trimmed) return;
+
+    if (!isValidAssetUrlOrPath(trimmed)) {
+      setStatusMessage({
+        type: 'error',
+        text: 'Image link must be a valid web URL or asset path.',
+      });
+      return;
+    }
+
+    const newItem: FormAttachedImage = {
+      id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      imageUrl: trimmed,
+      altText: formAltInput.trim(),
+      isPrimary: formImages.length === 0,
+      sortOrder: formImages.length,
+      source: 'url',
+    };
+
+    setFormImages((prev) => [...prev, newItem]);
+    setFormUrlInput('');
+    setFormAltInput('');
+  };
+
+  const handleRemoveFormImage = (id: string) => {
+    setFormImages((prev) => {
+      const remaining = prev.filter((img) => img.id !== id);
+      if (remaining.length > 0 && !remaining.some((img) => img.isPrimary)) {
+        remaining[0].isPrimary = true;
+      }
+      return remaining;
+    });
+  };
+
+  const handleToggleFormPrimary = (id: string) => {
+    setFormImages((prev) =>
+      prev.map((img) => ({
+        ...img,
+        isPrimary: img.id === id,
+      }))
+    );
+  };
+
   const fetchProjects = async () => {
     setIsLoading(true);
 
@@ -224,6 +381,11 @@ export const ProjectsManager: React.FC = () => {
       futureImprovements: '',
     });
 
+    setFormImages([]);
+    setFormUrlInput('');
+    setFormAltInput('');
+    setFormImageMode('device');
+
     setIsFormModalOpen(true);
   };
 
@@ -275,6 +437,20 @@ export const ProjectsManager: React.FC = () => {
           ? caseStudy.futureImprovements.join('\n')
           : '',
     });
+
+    setFormImages(
+      (project.images || []).map((img, idx) => ({
+        id: img.id,
+        imageUrl: img.imageUrl,
+        altText: img.altText || '',
+        isPrimary: img.isPrimary,
+        sortOrder: img.sortOrder ?? idx,
+        source: img.imageUrl.startsWith('data:') ? 'device' : 'url',
+      }))
+    );
+    setFormUrlInput('');
+    setFormAltInput('');
+    setFormImageMode('device');
 
     setIsFormModalOpen(true);
   };
@@ -419,6 +595,39 @@ export const ProjectsManager: React.FC = () => {
       }
 
       if (res.success) {
+        // Upload any attached images
+        if (!editingProject && res.data && formImages.length > 0) {
+          const createdProject = res.data as { id: string };
+          for (let i = 0; i < formImages.length; i++) {
+            const img = formImages[i];
+            try {
+              await apiClient.post(`/projects/${createdProject.id}/images`, {
+                imageUrl: img.imageUrl,
+                altText: img.altText || null,
+                isPrimary: img.isPrimary,
+                sortOrder: i,
+              });
+            } catch {
+              // Ignore single image failure
+            }
+          }
+        } else if (editingProject && formImages.length > 0) {
+          const newImages = formImages.filter((img) => img.id.startsWith('temp-'));
+          for (let i = 0; i < newImages.length; i++) {
+            const img = newImages[i];
+            try {
+              await apiClient.post(`/projects/${editingProject.id}/images`, {
+                imageUrl: img.imageUrl,
+                altText: img.altText || null,
+                isPrimary: img.isPrimary,
+                sortOrder: img.sortOrder ?? i,
+              });
+            } catch {
+              // Ignore single image failure
+            }
+          }
+        }
+
         setStatusMessage({
           type: 'success',
           text: editingProject
@@ -491,6 +700,10 @@ export const ProjectsManager: React.FC = () => {
     setIsLoadingImages(true);
 
     setNewImageUrl('');
+    setSelectedFileMeta(null);
+    setImageInputMode('device');
+    setIsProcessingFile(false);
+    setImageDragActive(false);
     setNewImageAlt('');
     setNewImageIsPrimary(false);
     setNewImageSortOrder(0);
@@ -516,10 +729,18 @@ export const ProjectsManager: React.FC = () => {
   ) => {
     e.preventDefault();
 
-    if (
-      !imagesModalProject ||
-      !newImageUrl.trim()
-    ) {
+    if (!imagesModalProject) {
+      return;
+    }
+
+    if (!newImageUrl.trim()) {
+      setStatusMessage({
+        type: 'error',
+        text:
+          imageInputMode === 'device'
+            ? 'Please choose an image file from your device / file explorer.'
+            : 'Please enter an image link or local path.',
+      });
       return;
     }
 
@@ -531,7 +752,7 @@ export const ProjectsManager: React.FC = () => {
       setStatusMessage({
         type: 'error',
         text:
-          'Image URL must be a valid external URL (http/https) or local asset path (/src/assets/... or /assets/...).',
+          'Image must be a valid file upload, web URL (http/https), or local asset path.',
       });
       return;
     }
@@ -562,6 +783,7 @@ export const ProjectsManager: React.FC = () => {
         res.data
       ) {
         setNewImageUrl('');
+        setSelectedFileMeta(null);
         setNewImageAlt('');
         setNewImageIsPrimary(
           false
@@ -1225,6 +1447,198 @@ export const ProjectsManager: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Project Images */}
+                <div className="border-b border-slate-200 dark:border-[#303841]">
+                  <SectionHeader
+                    title="Project Images"
+                    description="Upload screenshots or mockups from your device / file explorer or specify links."
+                  />
+
+                  <div className="p-5 space-y-4">
+                    {/* Mode Tabs */}
+                    <div className="flex border-b border-slate-200 dark:border-[#303841]">
+                      <button
+                        type="button"
+                        onClick={() => setFormImageMode('device')}
+                        className={`flex items-center gap-2 border-b-2 px-4 py-2 text-xs font-medium transition-colors ${
+                          formImageMode === 'device'
+                            ? 'border-[#d6a83a] text-[#b48316] dark:text-[#d6a83a]'
+                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#7f8995] dark:hover:text-[#f4f5f6]'
+                        }`}
+                      >
+                        <HardDrive className="h-3.5 w-3.5" />
+                        From Device / File Explorer
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormImageMode('url')}
+                        className={`flex items-center gap-2 border-b-2 px-4 py-2 text-xs font-medium transition-colors ${
+                          formImageMode === 'url'
+                            ? 'border-[#d6a83a] text-[#b48316] dark:text-[#d6a83a]'
+                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#7f8995] dark:hover:text-[#f4f5f6]'
+                        }`}
+                      >
+                        <LinkIcon className="h-3.5 w-3.5" />
+                        Image URL / Link
+                      </button>
+                    </div>
+
+                    {formImageMode === 'device' ? (
+                      <div>
+                        <input
+                          ref={formFileInputRef}
+                          type="file"
+                          multiple
+                          accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files.length > 0) {
+                              handleFormDeviceFiles(e.target.files);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
+
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setFormDragActive(true);
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            setFormDragActive(false);
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setFormDragActive(false);
+                            if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                              handleFormDeviceFiles(e.dataTransfer.files);
+                            }
+                          }}
+                          onClick={() => formFileInputRef.current?.click()}
+                          className={`group relative cursor-pointer border-2 border-dashed p-6 text-center transition-all ${
+                            formDragActive
+                              ? 'border-[#d6a83a] bg-[#d6a83a]/5 dark:bg-[#d6a83a]/10'
+                              : 'border-slate-300 bg-white hover:border-[#d6a83a]/70 hover:bg-slate-50 dark:border-[#303841] dark:bg-[#12161b] dark:hover:border-[#d6a83a]/60 dark:hover:bg-[#181d23]'
+                          }`}
+                        >
+                          {isFormImageProcessing ? (
+                            <div className="flex flex-col items-center justify-center py-2">
+                              <Loader2 className="h-7 w-7 animate-spin text-[#d6a83a]" />
+                              <p className="mt-2 text-xs text-slate-500 dark:text-[#8b949e]">
+                                Processing selected images...
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-2">
+                              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#d6a83a]/10 text-[#b48316] dark:text-[#d6a83a]">
+                                <Upload className="h-5 w-5" />
+                              </div>
+                              <p className="text-xs font-semibold text-slate-800 dark:text-[#f4f5f6]">
+                                Click to select images from file explorer or drag & drop here
+                              </p>
+                              <p className="mt-1 text-[11px] text-slate-400 dark:text-[#7f8995]">
+                                Multiple files supported (PNG, JPG, WEBP, GIF, SVG up to 10MB)
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={formUrlInput}
+                            onChange={(e) => setFormUrlInput(e.target.value)}
+                            placeholder="https://... or /src/assets/projects/..."
+                            className={modalInputClass}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddFormUrlImage}
+                            disabled={!formUrlInput.trim()}
+                            className="shrink-0 border border-[#d6a83a] bg-[#d6a83a] px-4 py-2 text-xs font-semibold text-[#12161b] hover:bg-[#e2b94f] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Add Link
+                          </button>
+                        </div>
+                        {formUrlInput.trim() && (
+                          <input
+                            type="text"
+                            value={formAltInput}
+                            onChange={(e) => setFormAltInput(e.target.value)}
+                            placeholder="Alt text / description (optional)"
+                            className={modalInputClass}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Attached Images List */}
+                    {formImages.length > 0 && (
+                      <div className="mt-4 space-y-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#7f8995]">
+                          Attached Images ({formImages.length})
+                        </p>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {formImages.map((img, idx) => (
+                            <div
+                              key={img.id}
+                              className="flex items-center gap-3 border border-slate-300 bg-white p-2.5 dark:border-[#303841] dark:bg-[#12161b]"
+                            >
+                              <div className="h-14 w-20 shrink-0 overflow-hidden border border-slate-200 bg-slate-100 dark:border-[#303841] dark:bg-[#181d23]">
+                                <img
+                                  src={resolveAsset(img.imageUrl)}
+                                  alt={img.altText || 'Project preview'}
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-medium text-slate-800 dark:text-[#f4f5f6]">
+                                  {img.fileName || img.altText || `Image ${idx + 1}`}
+                                </p>
+                                {img.formattedSize && (
+                                  <p className="text-[10px] text-slate-400 dark:text-[#7f8995]">
+                                    {img.formattedSize}
+                                  </p>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleFormPrimary(img.id)}
+                                  className={`mt-1 inline-flex items-center gap-1 text-[10px] font-medium transition-colors ${
+                                    img.isPrimary
+                                      ? 'text-[#a47d18] dark:text-[#d6a83a]'
+                                      : 'text-slate-400 hover:text-slate-700 dark:text-[#7f8995] dark:hover:text-[#f4f5f6]'
+                                  }`}
+                                >
+                                  <Star
+                                    className={`h-3 w-3 ${
+                                      img.isPrimary ? 'fill-current' : ''
+                                    }`}
+                                  />
+                                  {img.isPrimary ? 'Primary Thumbnail' : 'Set as primary'}
+                                </button>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveFormImage(img.id)}
+                                className="p-1 text-slate-400 hover:text-red-500 dark:text-[#7f8995] dark:hover:text-red-400"
+                                title="Remove image"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Publishing */}
                 <div className="border-b border-slate-200 dark:border-[#303841]">
                   <SectionHeader
@@ -1761,63 +2175,167 @@ export const ProjectsManager: React.FC = () => {
                 >
                   <div className="mb-4">
                     <h4 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-800 dark:text-[#f4f5f6]">
-                      Add Image
+                      Add Project Image
                     </h4>
 
                     <p className="mt-1 text-[10px] text-slate-400 dark:text-[#7f8995]">
-                      Add an external URL or local portfolio asset.
+                      Choose an image from your device / file explorer or enter an image link.
                     </p>
                   </div>
 
-                  <div className="space-y-4">
-                    <ModalField
-                      label="Image URL"
-                      required
+                  {/* Mode Selector Tabs */}
+                  <div className="mb-4 flex border-b border-slate-200 dark:border-[#303841]">
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode('device')}
+                      className={`flex items-center gap-2 border-b-2 px-4 py-2 text-xs font-medium transition-colors ${
+                        imageInputMode === 'device'
+                          ? 'border-[#d6a83a] text-[#b48316] dark:text-[#d6a83a]'
+                          : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#7f8995] dark:hover:text-[#f4f5f6]'
+                      }`}
                     >
-                      <input
-                        type="text"
-                        required
-                        value={
-                          newImageUrl
-                        }
-                        onChange={(e) =>
-                          setNewImageUrl(
-                            e.target
-                              .value
-                          )
-                        }
-                        placeholder="/src/assets/projects/example.jpg"
-                        className={
-                          modalInputClass
-                        }
-                      />
+                      <HardDrive className="h-3.5 w-3.5" />
+                      From Device / File Explorer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setImageInputMode('url')}
+                      className={`flex items-center gap-2 border-b-2 px-4 py-2 text-xs font-medium transition-colors ${
+                        imageInputMode === 'url'
+                          ? 'border-[#d6a83a] text-[#b48316] dark:text-[#d6a83a]'
+                          : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-[#7f8995] dark:hover:text-[#f4f5f6]'
+                      }`}
+                    >
+                      <LinkIcon className="h-3.5 w-3.5" />
+                      Image URL / Link
+                    </button>
+                  </div>
 
-                      {newImageUrl && (
-                        <div className="mt-3 flex items-center gap-3">
-                          <div className="h-12 w-20 overflow-hidden border border-slate-300 bg-slate-100 dark:border-[#303841] dark:bg-[#12161b]">
-                            <img
-                              src={resolveAsset(
-                                newImageUrl
-                              )}
-                              alt="Image preview"
-                              className="h-full w-full object-cover"
-                              onError={(
-                                e
-                              ) => {
-                                (
-                                  e.target as HTMLElement
-                                ).style.display =
-                                  'none';
-                              }}
-                            />
-                          </div>
+                  <div className="space-y-4">
+                    {imageInputMode === 'device' ? (
+                      <div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml"
+                          className="hidden"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleDeviceFile(e.target.files[0]);
+                              e.target.value = '';
+                            }
+                          }}
+                        />
 
-                          <span className="text-[10px] text-slate-400 dark:text-[#7f8995]">
-                            Preview
-                          </span>
+                        <div
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            setImageDragActive(true);
+                          }}
+                          onDragLeave={(e) => {
+                            e.preventDefault();
+                            setImageDragActive(false);
+                          }}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setImageDragActive(false);
+                            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                              handleDeviceFile(e.dataTransfer.files[0]);
+                            }
+                          }}
+                          onClick={() => fileInputRef.current?.click()}
+                          className={`group relative cursor-pointer border-2 border-dashed p-6 text-center transition-all ${
+                            imageDragActive
+                              ? 'border-[#d6a83a] bg-[#d6a83a]/5 dark:bg-[#d6a83a]/10'
+                              : 'border-slate-300 bg-white hover:border-[#d6a83a]/70 hover:bg-slate-50 dark:border-[#303841] dark:bg-[#12161b] dark:hover:border-[#d6a83a]/60 dark:hover:bg-[#181d23]'
+                          }`}
+                        >
+                          {isProcessingFile ? (
+                            <div className="flex flex-col items-center justify-center py-3">
+                              <Loader2 className="h-7 w-7 animate-spin text-[#d6a83a]" />
+                              <p className="mt-2 text-xs text-slate-500 dark:text-[#8b949e]">
+                                Processing image from device...
+                              </p>
+                            </div>
+                          ) : selectedFileMeta && newImageUrl ? (
+                            <div className="flex flex-col items-center justify-center gap-3">
+                              <div className="relative h-28 w-44 overflow-hidden rounded border border-slate-300 dark:border-[#303841] shadow-sm">
+                                <img
+                                  src={newImageUrl}
+                                  alt="Selected preview"
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                              <div className="text-center">
+                                <p className="text-xs font-semibold text-slate-800 dark:text-[#f4f5f6]">
+                                  {selectedFileMeta.fileName}
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-slate-400 dark:text-[#7f8995]">
+                                  {selectedFileMeta.formattedSize}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  fileInputRef.current?.click();
+                                }}
+                                className="mt-1 inline-flex items-center gap-1.5 rounded border border-slate-300 dark:border-[#39424c] bg-white dark:bg-[#1a2026] px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-[#d2d7dc] hover:border-[#d6a83a]"
+                              >
+                                <FolderOpen className="h-3.5 w-3.5 text-[#d6a83a]" />
+                                Choose different file
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center py-3">
+                              <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-[#d6a83a]/10 text-[#b48316] dark:text-[#d6a83a]">
+                                <Upload className="h-5 w-5" />
+                              </div>
+                              <p className="text-xs font-semibold text-slate-800 dark:text-[#f4f5f6]">
+                                Click to select image from device / file explorer or drag & drop here
+                              </p>
+                              <p className="mt-1 text-[11px] text-slate-400 dark:text-[#7f8995]">
+                                PNG, JPG, WEBP, GIF, SVG up to 10MB
+                              </p>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </ModalField>
+                      </div>
+                    ) : (
+                      <ModalField
+                        label="Image URL or Asset Path"
+                        required
+                      >
+                        <input
+                          type="text"
+                          required={imageInputMode === 'url'}
+                          value={newImageUrl}
+                          onChange={(e) =>
+                            setNewImageUrl(e.target.value)
+                          }
+                          placeholder="/src/assets/projects/example.jpg or https://..."
+                          className={modalInputClass}
+                        />
+
+                        {newImageUrl && !newImageUrl.startsWith('data:') && (
+                          <div className="mt-3 flex items-center gap-3">
+                            <div className="h-12 w-20 overflow-hidden border border-slate-300 bg-slate-100 dark:border-[#303841] dark:bg-[#12161b]">
+                              <img
+                                src={resolveAsset(newImageUrl)}
+                                alt="Image preview"
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLElement).style.display = 'none';
+                                }}
+                              />
+                            </div>
+                            <span className="text-[10px] text-slate-400 dark:text-[#7f8995]">
+                              Preview
+                            </span>
+                          </div>
+                        )}
+                      </ModalField>
+                    )}
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <ModalField label="Alt Text / Label">

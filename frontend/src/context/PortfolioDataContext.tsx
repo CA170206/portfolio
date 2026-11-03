@@ -8,10 +8,6 @@ import React, {
 } from 'react';
 import publicPortfolioApi from '../api/publicPortfolioApi';
 import type {
-  RawGithubData,
-  RawLinkedinData,
-} from '../api/publicPortfolioApi';
-import type {
   ProfileData,
   Project,
   CertificateItem,
@@ -21,54 +17,110 @@ import type {
   SocialLink,
 } from '../types/portfolio';
 
+import { profileData as defaultProfile } from '../data/profile';
+import { projectsData as defaultProjects } from '../data/projects';
+import { certificatesData as defaultCertificates } from '../data/certificates';
+import { experienceData as defaultExperience } from '../data/experience';
+import { educationData as defaultEducation } from '../data/education';
+import { skillsData as defaultSkills } from '../data/skills';
+import { socialLinks as defaultSocials } from '../data/socials';
+
+export type PortfolioEducationItem = EducationItem & {
+  gradeLabel?: string;
+  grade?: string;
+  resultImage?: string | null;
+  resultTitle?: string;
+  resultLabel?: string;
+};
+
 export interface PortfolioDataContextType {
   profile: ProfileData | null;
   projects: Project[];
   certificates: CertificateItem[];
   experience: (ExperienceItem & { offerLetterUrl?: string })[];
-  education: (EducationItem & {
-    gradeLabel?: string;
-    grade?: string;
-    resultImage?: string | null;
-    resultTitle?: string;
-    resultLabel?: string;
-  })[];
+  education: PortfolioEducationItem[];
   skills: SkillCategory[];
   socialLinks: SocialLink[];
-  github: RawGithubData | null;
-  linkedin: RawLinkedinData | null;
   isLoading: boolean;
   error: string | null;
   errors: Record<string, string | null>;
   refresh: () => Promise<void>;
 }
 
+const CACHE_KEY = 'portfolio_cms_cache_v2';
+
+interface CachedPortfolioSnapshot {
+  profile?: ProfileData;
+  projects?: Project[];
+  certificates?: CertificateItem[];
+  experience?: (ExperienceItem & { offerLetterUrl?: string })[];
+  education?: PortfolioEducationItem[];
+  skills?: SkillCategory[];
+  socialLinks?: SocialLink[];
+}
+
+const readCachedSnapshot = (): CachedPortfolioSnapshot | null => {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (raw) {
+      return JSON.parse(raw) as CachedPortfolioSnapshot;
+    }
+  } catch {
+    // Ignore parse or storage errors
+  }
+  return null;
+};
+
 const PortfolioDataContext = createContext<PortfolioDataContextType | undefined>(undefined);
 
 export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [certificates, setCertificates] = useState<CertificateItem[]>([]);
-  const [experience, setExperience] = useState<(ExperienceItem & { offerLetterUrl?: string })[]>([]);
-  const [education, setEducation] = useState<
-    (EducationItem & {
-      gradeLabel?: string;
-      grade?: string;
-      resultImage?: string | null;
-      resultTitle?: string;
-      resultLabel?: string;
-    })[]
-  >([]);
-  const [skills, setSkills] = useState<SkillCategory[]>([]);
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
-  const [github, setGithub] = useState<RawGithubData | null>(null);
-  const [linkedin, setLinkedin] = useState<RawLinkedinData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const initialCache = readCachedSnapshot();
+
+  const [profile, setProfile] = useState<ProfileData | null>(
+    () => initialCache?.profile || (defaultProfile as unknown as ProfileData)
+  );
+  const [projects, setProjects] = useState<Project[]>(
+    () =>
+      initialCache?.projects && initialCache.projects.length > 0
+        ? initialCache.projects
+        : defaultProjects
+  );
+  const [certificates, setCertificates] = useState<CertificateItem[]>(
+    () =>
+      initialCache?.certificates && initialCache.certificates.length > 0
+        ? initialCache.certificates
+        : (defaultCertificates as unknown as CertificateItem[])
+  );
+  const [experience, setExperience] = useState<(ExperienceItem & { offerLetterUrl?: string })[]>(
+    () =>
+      initialCache?.experience && initialCache.experience.length > 0
+        ? initialCache.experience
+        : defaultExperience
+  );
+  const [education, setEducation] = useState<PortfolioEducationItem[]>(
+    () =>
+      initialCache?.education && initialCache.education.length > 0
+        ? initialCache.education
+        : (defaultEducation as unknown as PortfolioEducationItem[])
+  );
+  const [skills, setSkills] = useState<SkillCategory[]>(
+    () =>
+      initialCache?.skills && initialCache.skills.length > 0
+        ? initialCache.skills
+        : defaultSkills
+  );
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(
+    () =>
+      initialCache?.socialLinks && initialCache.socialLinks.length > 0
+        ? initialCache.socialLinks
+        : (defaultSocials as unknown as SocialLink[])
+  );
+
+  // Initial render has complete data immediately with zero lag
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errors, setErrors] = useState<Record<string, string | null>>({});
 
   const loadAll = useCallback(async () => {
-    setIsLoading(true);
-
     const [
       profileRes,
       projectsRes,
@@ -77,8 +129,6 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       eduRes,
       skillsRes,
       socialsRes,
-      githubRes,
-      linkedinRes,
     ] = await Promise.allSettled([
       publicPortfolioApi.getProfile(),
       publicPortfolioApi.getProjects(),
@@ -87,68 +137,89 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       publicPortfolioApi.getEducation(),
       publicPortfolioApi.getSkills(),
       publicPortfolioApi.getSocialLinks(),
-      publicPortfolioApi.getGithub(),
-      publicPortfolioApi.getLinkedin(),
     ]);
 
     const newErrors: Record<string, string | null> = {};
+    let currentProfile: ProfileData | null = null;
+    let currentProjects: Project[] | null = null;
+    let currentCerts: CertificateItem[] | null = null;
+    let currentExp: (ExperienceItem & { offerLetterUrl?: string })[] | null = null;
+    let currentEdu: PortfolioEducationItem[] | null = null;
+    let currentSkills: SkillCategory[] | null = null;
+    let currentSocials: SocialLink[] | null = null;
 
     if (profileRes.status === 'fulfilled' && profileRes.value) {
       setProfile(profileRes.value);
+      currentProfile = profileRes.value;
     } else {
       newErrors.profile = 'Failed to load profile';
     }
 
     if (projectsRes.status === 'fulfilled' && projectsRes.value) {
       setProjects(projectsRes.value);
+      currentProjects = projectsRes.value;
     } else {
       newErrors.projects = 'Failed to load projects';
     }
 
     if (certsRes.status === 'fulfilled' && certsRes.value) {
       setCertificates(certsRes.value);
+      currentCerts = certsRes.value;
     } else {
       newErrors.certificates = 'Failed to load certificates';
     }
 
     if (expRes.status === 'fulfilled' && expRes.value) {
       setExperience(expRes.value);
+      currentExp = expRes.value;
     } else {
       newErrors.experience = 'Failed to load experience';
     }
 
     if (eduRes.status === 'fulfilled' && eduRes.value) {
       setEducation(eduRes.value);
+      currentEdu = eduRes.value;
     } else {
       newErrors.education = 'Failed to load education';
     }
 
     if (skillsRes.status === 'fulfilled' && skillsRes.value) {
       setSkills(skillsRes.value);
+      currentSkills = skillsRes.value;
     } else {
       newErrors.skills = 'Failed to load skills';
     }
 
     if (socialsRes.status === 'fulfilled' && socialsRes.value) {
       setSocialLinks(socialsRes.value);
+      currentSocials = socialsRes.value;
     } else {
       newErrors.socialLinks = 'Failed to load social links';
     }
 
-    if (githubRes.status === 'fulfilled' && githubRes.value) {
-      setGithub(githubRes.value);
-    } else {
-      newErrors.github = 'Failed to load GitHub data';
-    }
-
-    if (linkedinRes.status === 'fulfilled' && linkedinRes.value) {
-      setLinkedin(linkedinRes.value);
-    } else {
-      newErrors.linkedin = 'Failed to load LinkedIn data';
-    }
-
     setErrors(newErrors);
     setIsLoading(false);
+
+    // Save updated data to cache
+    try {
+      const existingRaw = localStorage.getItem(CACHE_KEY);
+      const existing = existingRaw ? JSON.parse(existingRaw) : {};
+      localStorage.setItem(
+        CACHE_KEY,
+        JSON.stringify({
+          ...existing,
+          ...(currentProfile ? { profile: currentProfile } : {}),
+          ...(currentProjects ? { projects: currentProjects } : {}),
+          ...(currentCerts ? { certificates: currentCerts } : {}),
+          ...(currentExp ? { experience: currentExp } : {}),
+          ...(currentEdu ? { education: currentEdu } : {}),
+          ...(currentSkills ? { skills: currentSkills } : {}),
+          ...(currentSocials ? { socialLinks: currentSocials } : {}),
+        })
+      );
+    } catch {
+      // Ignore quota/storage errors
+    }
   }, []);
 
   useEffect(() => {
@@ -166,8 +237,6 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       education,
       skills,
       socialLinks,
-      github,
-      linkedin,
       isLoading,
       error: globalError,
       errors,
@@ -181,14 +250,12 @@ export const PortfolioDataProvider: React.FC<{ children: React.ReactNode }> = ({
       education,
       skills,
       socialLinks,
-      github,
-      linkedin,
       isLoading,
       errors,
       loadAll,
+      globalError,
     ]
   );
-
 
   return (
     <PortfolioDataContext.Provider value={contextValue}>

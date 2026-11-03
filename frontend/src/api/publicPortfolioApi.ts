@@ -72,12 +72,17 @@ async function fetchPublicJson<T>(endpoint: string): Promise<T | null> {
   const url = buildApiUrl(endpoint);
 
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
     const res = await fetch(url, {
       method: 'GET',
       headers: {
         Accept: 'application/json',
       },
+      signal: controller.signal,
     });
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       console.warn(`[publicPortfolioApi] GET ${url} returned status ${res.status}`);
@@ -402,30 +407,6 @@ export const adaptSocialLinks = (rawList: RawSocialLink[] | null): SocialLink[] 
   }));
 };
 
-export interface RawContributionDay {
-  date: string;
-  count: number;
-  level: number;
-}
-
-export interface RawGithubData {
-  username: string;
-  profileUrl: string;
-  totalContributions: number;
-  contributions: RawContributionDay[];
-  lastSyncedAt: string | null;
-}
-
-export interface RawLinkedinData {
-  profileUrl: string;
-  followers: string;
-  connections: string;
-  role: string;
-  company: string;
-  location: string;
-  education: string;
-}
-
 // ==================== PUBLIC API METHODS ====================
 
 export const publicPortfolioApi = {
@@ -436,9 +417,6 @@ export const publicPortfolioApi = {
   getEducation: async () => adaptEducation(await fetchPublicJson<RawEducation[]>('/api/education/public')),
   getSkills: async () => adaptSkills(await fetchPublicJson<RawSkill[]>('/api/skills/public')),
   getSocialLinks: async () => adaptSocialLinks(await fetchPublicJson<RawSocialLink[]>('/api/social-links/public')),
-  getGithub: async () => fetchPublicJson<RawGithubData>('/api/github/public'),
-  getLinkedin: async () => fetchPublicJson<RawLinkedinData>('/api/linkedin/public'),
 };
 
 export default publicPortfolioApi;
-

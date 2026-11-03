@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   ExternalLink,
@@ -10,7 +10,10 @@ import { GithubIcon } from '../components/icons/SocialIcons';
 import { githubPreviewRepos } from '../data/socials';
 import { usePortfolioData } from '../context/PortfolioDataContext';
 
-const DEFAULT_USERNAME = 'CA170206';
+const GITHUB_USERNAME = 'CA170206';
+
+const CONTRIBUTIONS_URL =
+  `https://github-contributions-api.jogruber.de/v4/${GITHUB_USERNAME}?y=last`;
 
 const MONTHS = [
   'Jan',
@@ -57,27 +60,71 @@ interface ContributionItem {
 }
 
 export const GitHubSection: React.FC = () => {
-  const { socialLinks, github, isLoading: contextLoading } = usePortfolioData();
+  const { socialLinks } = usePortfolioData();
+  const [contributions, setContributions] = useState<ContributionItem[]>([]);
+  const [totalContributions, setTotalContributions] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<boolean>(false);
 
-  const username = github?.username || DEFAULT_USERNAME;
   const githubUrl =
-    github?.profileUrl ||
     socialLinks.find((item) => item.platform.toLowerCase() === 'github')?.url ||
-    `https://github.com/${username}`;
+    `https://github.com/${GITHUB_USERNAME}`;
 
-  const contributions = useMemo<ContributionItem[]>(() => {
-    if (!github?.contributions || !Array.isArray(github.contributions)) return [];
-    return [...github.contributions].sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
-  }, [github?.contributions]);
+  useEffect(() => {
+    let cancelled = false;
 
-  const totalContributions =
-    github?.totalContributions ??
-    contributions.reduce((sum, item) => sum + Number(item.count || 0), 0);
+    const loadContributions = async () => {
+      try {
+        setLoading(true);
+        setError(false);
 
-  const loading = contextLoading && !github;
-  const error = !loading && contributions.length === 0;
+        const response = await fetch(CONTRIBUTIONS_URL);
+
+        if (!response.ok) {
+          throw new Error('GitHub contribution request failed');
+        }
+
+        const data = await response.json();
+
+        if (!Array.isArray(data.contributions)) {
+          throw new Error('Invalid contribution data');
+        }
+
+        if (cancelled) return;
+
+        const sortedContributions = [...data.contributions].sort(
+          (a: ContributionItem, b: ContributionItem) =>
+            new Date(a.date).getTime() - new Date(b.date).getTime()
+        );
+
+        setContributions(sortedContributions);
+
+        const total =
+          data.total?.lastYear ??
+          sortedContributions.reduce(
+            (sum: number, item: ContributionItem) => sum + Number(item.count || 0),
+            0
+          );
+
+        setTotalContributions(total);
+      } catch (err) {
+        if (!cancelled) {
+          console.error('GitHub contribution error:', err);
+          setError(true);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadContributions();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const calendar = useMemo(() => {
     if (!contributions.length) {
@@ -436,16 +483,16 @@ export const GitHubSection: React.FC = () => {
               <div className="flex flex-col gap-2 text-[11px] text-slate-500 dark:text-[#69737e] sm:flex-row sm:items-center sm:justify-between">
 
                 <span>
-                  Public contribution activity from @{username}
+                  Public contribution activity from @{GITHUB_USERNAME}
                 </span>
 
                 <a
-                  href={`https://github.com/${username}`}
+                  href={`https://github.com/${GITHUB_USERNAME}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[#b48316] dark:text-[#d6a83a] hover:underline"
                 >
-                  github.com/{username}
+                  github.com/{GITHUB_USERNAME}
                 </a>
 
               </div>
@@ -467,7 +514,7 @@ export const GitHubSection: React.FC = () => {
             rel="noopener noreferrer"
             className="flex w-fit items-center gap-2 text-sm font-medium text-slate-900 dark:text-[#f4f5f6] transition-colors hover:text-[#b48316] dark:hover:text-[#d6a83a]"
           >
-            @{username}
+            @{GITHUB_USERNAME}
 
             <ArrowUpRight className="h-4 w-4" />
           </a>
